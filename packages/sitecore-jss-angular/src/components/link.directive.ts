@@ -51,7 +51,7 @@ export class LinkDirective implements OnChanges {
       this.renderInlineWrapper(field.editableFirstPart, field.editableLastPart);
     } else if (field && (field.href || field.value)) {
       const props = field.href ? field : field.value;
-      const linkText = field.text || field.value.text || field.href || field.value.href;
+      const linkText = field.text || field.value?.text || field.href || field.value?.href;
       const mergedAttrs = { ...props, ...this.attrs };
       this.renderTemplate(mergedAttrs, linkText);
     }
