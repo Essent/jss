@@ -35,7 +35,7 @@ export interface ComponentNameAndModule {
     | JssCanActivate
     | Type<JssCanActivate>
     | Array<JssCanActivate | Type<JssCanActivate>>;
-  resolve?: { [key: string]: Resolve<any> | Type<Resolve<any>> };
+  resolve?: { [key: string]: JssResolve<any> | Type<JssResolve<any>> };
 }
 
 export function instanceOfComponentNameAndType(object: any): object is ComponentNameAndType {

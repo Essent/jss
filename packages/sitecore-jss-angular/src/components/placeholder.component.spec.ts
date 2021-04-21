@@ -3,12 +3,14 @@ import {
   Component,
   DebugElement,
   EventEmitter,
+  Injector,
   Input,
   NgModuleFactoryLoader,
   Output,
 } from '@angular/core';
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule, SpyNgModuleFactoryLoader } from '@angular/router/testing';
 import { JssModule } from '../lib.module';
 import { convertedData as eeData } from '../testData/ee-data';
@@ -16,12 +18,14 @@ import {
   convertedDevData as nonEeDevData,
   convertedLayoutServiceData as nonEeLsData,
 } from '../testData/non-ee-data';
+import { dataResolverFactory } from './data-resolver-factory';
+import { COMPONENT_DATA, COMPONENT_RENDERING, DATA_RESOLVER } from './placeholder.token';
 
 @Component({
   selector: 'test-placeholder',
   template: `
     <sc-placeholder [name]="name" [rendering]="rendering">
-      <img *scPlaceholderLoading src="loading.gif">
+      <img *scPlaceholderLoading src="loading.gif" />
     </sc-placeholder>
   `,
 })
@@ -263,7 +267,12 @@ describe('<sc-placeholder />', () => {
 @Component({
   selector: 'test-parent',
   template: `
-    <sc-placeholder [name]="name" [rendering]="rendering" [inputs]="inputs" [outputs]="outputs"></sc-placeholder>
+    <sc-placeholder
+      [name]="name"
+      [rendering]="rendering"
+      [inputs]="inputs"
+      [outputs]="outputs"
+    ></sc-placeholder>
     {{ clickMessage }}
   `,
 })
@@ -416,4 +425,126 @@ describe('<sc-placeholder /> with input/ouput binding', () => {
       expect(de.nativeElement.innerHTML).toContain('dolor');
     });
   }));
+});
+
+const createMockResolve = <T>(value: T) => ({
+  data: {
+    resolve: () => Promise.resolve(value),
+  },
+});
+
+describe('Injection tokens', () => {
+  let fixture: ComponentFixture<TestPlaceholderComponent>;
+  let comp: TestPlaceholderComponent;
+
+  beforeEach(async(() => {
+    TestBed.configureTestingModule({
+      declarations: [
+        TestPlaceholderComponent,
+        TestDownloadCalloutComponent,
+        TestHomeComponent,
+        TestJumbotronComponent,
+      ],
+      imports: [
+        RouterTestingModule,
+        JssModule.withComponents([
+          { name: 'Home', type: TestHomeComponent, resolve: createMockResolve('Home data') },
+          {
+            name: 'Jumbotron',
+            type: TestJumbotronComponent,
+            resolve: createMockResolve('Jumbotron data'),
+          },
+        ]),
+      ],
+      providers: [
+        { provide: NgModuleFactoryLoader, value: SpyNgModuleFactoryLoader },
+        {
+          provide: DATA_RESOLVER,
+          useFactory: dataResolverFactory,
+          deps: [Injector, ActivatedRoute, Router],
+        },
+      ],
+    }).compileComponents();
+  }));
+
+  beforeEach(() => {
+    fixture = TestBed.createComponent(TestPlaceholderComponent);
+
+    comp = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should provide rendering through the COMPONENT_RENDERING injection token', async(() => {
+    const homeRendering = {
+      componentName: 'Home',
+      fields: {
+        title: { value: 'Home title' },
+      },
+    };
+    const jumbotronRendering = {
+      componentName: 'Jumbotron',
+      fields: {
+        title: { value: 'Jumbotron title' },
+      },
+    };
+
+    const rendering = {
+      placeholders: {
+        main: [homeRendering, jumbotronRendering],
+      },
+    };
+
+    comp.name = 'main';
+    comp.rendering = rendering;
+
+    fixture.detectChanges();
+    fixture.whenStable().then(() => {
+      fixture.detectChanges();
+
+      const homeComponent = fixture.debugElement.query(By.directive(TestHomeComponent));
+      const homeData = homeComponent.injector.get(COMPONENT_DATA);
+      expect(homeData).toEqual({ data: 'Home data' });
+
+      const jumbotronComponent = fixture.debugElement.query(By.directive(TestJumbotronComponent));
+      const jumbotronData = jumbotronComponent.injector.get(COMPONENT_DATA);
+      expect(jumbotronData).toEqual({ data: 'Jumbotron data' });
+    });
+  }));
+
+  it('should provide the component data injection token', () => {
+    const homeRendering = {
+      componentName: 'Home',
+      fields: {
+        title: { value: 'Home title' },
+      },
+    };
+    const jumbotronRendering = {
+      componentName: 'Jumbotron',
+      fields: {
+        title: { value: 'Jumbotron title' },
+      },
+    };
+
+    const rendering = {
+      placeholders: {
+        main: [homeRendering, jumbotronRendering],
+      },
+    };
+
+    comp.name = 'main';
+    comp.rendering = rendering;
+
+    fixture.detectChanges();
+    fixture.whenStable().then(() => {
+      fixture.detectChanges();
+
+      const homeComponent = fixture.debugElement.query(By.directive(TestHomeComponent));
+      const homeRenderingData = homeComponent.injector.get(COMPONENT_RENDERING);
+      expect(homeRenderingData).toBe(homeRendering);
+
+      const jumbotronComponent = fixture.debugElement.query(By.directive(TestJumbotronComponent));
+      const jumbotronRenderingData = jumbotronComponent.injector.get(COMPONENT_RENDERING);
+      expect(jumbotronRenderingData).toBe(jumbotronRendering);
+    });
+  });
 });

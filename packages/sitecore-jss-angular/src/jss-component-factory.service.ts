@@ -66,6 +66,7 @@ export class JssComponentFactoryService {
         componentDefinition: component,
         componentImplementation: loadedComponent.type,
         canActivate: loadedComponent.canActivate,
+        resolve: loadedComponent.resolve,
       });
     }
 
@@ -79,9 +80,7 @@ export class JssComponentFactoryService {
         if (!dynamicComponentType) {
           throw new Error(
             // tslint:disable-next-line:max-line-length
-            `JssComponentFactoryService: Lazy load module for component "${
-              lazyComponent.path
-            }" missing DYNAMIC_COMPONENT provider. Missing JssModule.forChild()?`
+            `JssComponentFactoryService: Lazy load module for component "${lazyComponent.path}" missing DYNAMIC_COMPONENT provider. Missing JssModule.forChild()?`
           );
         }
 
@@ -93,9 +92,7 @@ export class JssComponentFactoryService {
           } else {
             throw new Error(
               // tslint:disable-next-line:max-line-length
-              `JssComponentFactoryService: Lazy load module for component "${
-                lazyComponent.path
-              }" missing DYNAMIC_COMPONENT provider. Missing JssModule.forChild()?`
+              `JssComponentFactoryService: Lazy load module for component "${lazyComponent.path}" missing DYNAMIC_COMPONENT provider. Missing JssModule.forChild()?`
             );
           }
         }
@@ -107,6 +104,7 @@ export class JssComponentFactoryService {
             componentType
           ),
           canActivate: lazyComponent.canActivate,
+          resolve: lazyComponent.resolve,
         };
       });
     }
@@ -140,9 +138,8 @@ export class JssComponentFactoryService {
   ): Promise<ComponentFactoryResult[]> {
     // acquire all components and keep them in order while handling their potential async-ness
     return Promise.all(
-      components.map(
-        (component) =>
-          isRawRendering(component) ? this.getRawComponent(component) : this.getComponent(component)
+      components.map((component) =>
+        isRawRendering(component) ? this.getRawComponent(component) : this.getComponent(component)
       )
     );
   }
