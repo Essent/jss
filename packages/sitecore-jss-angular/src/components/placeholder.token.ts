@@ -63,6 +63,10 @@ export type GuardResolver = (result: ComponentFactoryResult[]) => Promise<Compon
 
 export const GUARD_RESOLVER = new InjectionToken<GuardResolver>('Sc.placeholder.guardResolver');
 
+export const COMPONENT_RENDERING = new InjectionToken<ComponentRendering>('Component Rendering');
+
+export const COMPONENT_DATA = new InjectionToken<Data>('Component data');
+
 export type DataResolver = (
   result: ComponentFactoryResult[]
 ) => Promise<Array<{ factory: ComponentFactoryResult; data: Data }>>;

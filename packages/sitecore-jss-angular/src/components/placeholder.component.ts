@@ -8,6 +8,7 @@ import {
   ElementRef,
   EventEmitter,
   Inject,
+  Injector,
   Input,
   KeyValueDiffer,
   KeyValueDiffers,
@@ -32,6 +33,8 @@ import {
 } from '../jss-component-factory.service';
 import { PlaceholderLoadingDirective } from './placeholder-loading.directive';
 import {
+  COMPONENT_DATA,
+  COMPONENT_RENDERING,
   DataResolver,
   DATA_RESOLVER,
   GuardResolver,
@@ -57,7 +60,10 @@ export interface FactoryWithData {
 @Component({
   selector: 'sc-placeholder,[sc-placeholder]',
   template: `
-    <ng-template *ngIf="isLoading" [ngTemplateOutlet]="placeholderLoading?.templateRef"></ng-template>
+    <ng-template
+      *ngIf="isLoading"
+      [ngTemplateOutlet]="placeholderLoading?.templateRef"
+    ></ng-template>
     <ng-template #view></ng-template>
   `,
 })
@@ -108,6 +114,7 @@ export class PlaceholderComponent implements OnInit, OnChanges, DoCheck, OnDestr
     private elementRef: ElementRef,
     private renderer: Renderer2,
     private router: Router,
+    private injector: Injector,
     @Inject(PLACEHOLDER_MISSING_COMPONENT_COMPONENT) private missingComponentComponent: Type<any>,
     @Inject(GUARD_RESOLVER) private guardResolver: GuardResolver,
     @Inject(DATA_RESOLVER) private dataResolver: DataResolver,
@@ -285,9 +292,23 @@ export class PlaceholderComponent implements OnInit, OnChanges, DoCheck, OnDestr
       rendering.componentFactory ||
       this.componentFactoryResolver.resolveComponentFactory(rendering.componentImplementation);
 
+    const injector = Injector.create({
+      parent: this.injector,
+      providers: [
+        {
+          provide: COMPONENT_RENDERING,
+          useValue: rendering.componentDefinition as ComponentRendering,
+        },
+        {
+          provide: COMPONENT_DATA,
+          useValue: data,
+        },
+      ],
+    });
+
     // apply the parent style attribute _ngcontent
     // work-around for https://github.com/angular/angular/issues/12215
-    const createdComponentRef = this.view.createComponent(componentFactory, index);
+    const createdComponentRef = this.view.createComponent(componentFactory, index, injector);
     if (this.parentStyleAttribute) {
       this.renderer.setAttribute(
         createdComponentRef.location.nativeElement,

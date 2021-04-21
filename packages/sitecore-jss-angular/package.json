@@ -1,6 +1,6 @@
 {
   "name": "@sitecore-jss/sitecore-jss-angular",
-  "version": "14.0.2-1",
+  "version": "14.0.2-2",
   "description": "",
   "scripts": {
     "build": "ng-packagr -p ng-package.json",

@@ -1,18 +1,39 @@
+export {
+  ComponentFields,
+  ComponentParams,
+  ComponentRendering,
+  dataApi,
+  Field,
+  getChildPlaceholder,
+  getFieldValue,
+  HtmlElementRendering,
+  HttpJsonFetcher,
+  HttpResponse,
+  isExperienceEditorActive,
+  isServer,
+  LayoutServiceContextData,
+  LayoutServiceData,
+  LayoutServiceRequestOptions,
+  mediaApi,
+  resetExperienceEditorChromes,
+  RouteData,
+} from '@sitecore-jss/sitecore-jss';
 export { FileDirective } from './components/file.directive';
+export { GenericLinkDirective } from './components/generic-link.directive';
 export { ImageDirective } from './components/image.directive';
 export { LinkDirective } from './components/link.directive';
-export { RouterLinkDirective } from './components/router-link.directive';
-export { GenericLinkDirective } from './components/generic-link.directive';
+export { PlaceholderLoadingDirective } from './components/placeholder-loading.directive';
 export { PlaceholderComponent } from './components/placeholder.component';
 export {
-  ComponentNameAndType,
-  DYNAMIC_COMPONENT,
   ComponentNameAndModule,
-  JssResolve,
-  JssCanActivate,
+  ComponentNameAndType,
+  COMPONENT_DATA,
+  COMPONENT_RENDERING,
+  DYNAMIC_COMPONENT,
   GuardInput,
+  JssCanActivate,
+  JssResolve,
 } from './components/placeholder.token';
-export { PlaceholderLoadingDirective } from './components/placeholder-loading.directive';
 export { isRawRendering } from './components/rendering';
 export {
   FileField,
@@ -23,27 +44,8 @@ export {
   TextField,
 } from './components/rendering-field';
 export { RichTextDirective } from './components/rich-text.directive';
+export { RouterLinkDirective } from './components/router-link.directive';
 export { TextDirective } from './components/text.directive';
-export { LayoutService } from './layout.service';
 export { LayoutServiceError } from './layout-service-error';
+export { LayoutService } from './layout.service';
 export { JssModule } from './lib.module';
-export {
-  dataApi,
-  mediaApi,
-  isExperienceEditorActive,
-  resetExperienceEditorChromes,
-  LayoutServiceData,
-  LayoutServiceContextData,
-  RouteData,
-  Field,
-  HtmlElementRendering,
-  LayoutServiceRequestOptions,
-  getChildPlaceholder,
-  getFieldValue,
-  ComponentRendering,
-  ComponentFields,
-  ComponentParams,
-  HttpJsonFetcher,
-  HttpResponse,
-  isServer,
-} from '@sitecore-jss/sitecore-jss';

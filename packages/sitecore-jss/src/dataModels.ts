@@ -3,7 +3,7 @@
  */
 export interface LayoutServiceData {
   sitecore: LayoutServiceContextData & {
-    route: RouteData
+    route: RouteData;
   };
 }
 
@@ -31,7 +31,7 @@ export interface RouteData {
   name: string;
   displayName?: string;
   fields?: {
-    [name: string]: Field
+    [name: string]: Field;
   };
   databaseName?: string;
   deviceId?: string;
@@ -50,14 +50,16 @@ export interface RouteData {
  */
 export type PlaceholdersData<TYPEDNAME extends string = string> = {
   [P in TYPEDNAME]: Array<ComponentRendering | HtmlElementRendering>;
+};
+
+export interface FieldsType {
+  [name: string]: Field | Item | Item[];
 }
 
 /**
  * Content field data passed to a component
  */
-export interface ComponentFields {
-  [name: string]: Field | Item | Item[];
-}
+export type ComponentFields<TFields extends FieldsType = FieldsType> = TFields;
 
 /**
  * Component params
@@ -69,12 +71,12 @@ export interface ComponentParams {
 /**
  * Definition of a component instance within a placeholder on a route
  */
-export interface ComponentRendering {
+export interface ComponentRendering<TFields extends FieldsType = FieldsType> {
   componentName: string;
   dataSource?: string;
   uid?: string;
   placeholders?: PlaceholdersData;
-  fields?: ComponentFields;
+  fields?: ComponentFields<TFields>;
   params?: ComponentParams;
 }
 
@@ -86,18 +88,23 @@ export interface HtmlElementRendering {
   type?: string;
   contents: string | null;
   attributes: {
-    [name: string]: string | undefined,
+    [name: string]: string | undefined;
   };
 }
 
 /**
  * Field value data on a component
  */
-export type GenericFieldValue = string | boolean | number | { [key: string]: any } | Array<{ [key: string]: any }>;
+export type GenericFieldValue =
+  | string
+  | boolean
+  | number
+  | { [key: string]: any }
+  | Array<{ [key: string]: any }>;
 
 export interface Field<T = GenericFieldValue> {
-    value: T;
-    editable?: string;
+  value: T;
+  editable?: string;
 }
 
 /**
