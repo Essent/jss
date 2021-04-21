@@ -62,9 +62,17 @@ class TestHomeComponent {
 
 @Component({
   selector: 'test-jumbotron',
-  template: ``,
+  template: `
+    <test-jumbotron-child></test-jumbotron-child>
+  `,
 })
 class TestJumbotronComponent {}
+
+@Component({
+  selector: 'test-jumbotron-child',
+  template: ``,
+})
+class TestJumbotronChildComponent {}
 
 describe('<sc-placeholder />', () => {
   let fixture: ComponentFixture<TestPlaceholderComponent>;
@@ -78,6 +86,7 @@ describe('<sc-placeholder />', () => {
         TestDownloadCalloutComponent,
         TestHomeComponent,
         TestJumbotronComponent,
+        TestJumbotronChildComponent,
       ],
       imports: [
         RouterTestingModule,
@@ -87,7 +96,6 @@ describe('<sc-placeholder />', () => {
           { name: 'Jumbotron', type: TestJumbotronComponent },
         ]),
       ],
-      providers: [{ provide: NgModuleFactoryLoader, value: SpyNgModuleFactoryLoader }],
     }).compileComponents();
   }));
 
@@ -333,7 +341,6 @@ describe('<sc-placeholder /> with input/ouput binding', () => {
           { name: 'Child', type: TestChildComponent },
         ]),
       ],
-      providers: [{ provide: NgModuleFactoryLoader, value: SpyNgModuleFactoryLoader }],
     });
 
     fixture = TestBed.createComponent(TestParentComponent);
@@ -440,10 +447,10 @@ describe('Injection tokens', () => {
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [
-        TestPlaceholderComponent,
-        TestDownloadCalloutComponent,
         TestHomeComponent,
         TestJumbotronComponent,
+        TestJumbotronChildComponent,
+        TestPlaceholderComponent,
       ],
       imports: [
         RouterTestingModule,
@@ -457,7 +464,6 @@ describe('Injection tokens', () => {
         ]),
       ],
       providers: [
-        { provide: NgModuleFactoryLoader, value: SpyNgModuleFactoryLoader },
         {
           provide: DATA_RESOLVER,
           useFactory: dataResolverFactory,
@@ -474,7 +480,7 @@ describe('Injection tokens', () => {
     fixture.detectChanges();
   });
 
-  it('should provide rendering through the COMPONENT_RENDERING injection token', async(() => {
+  it('should provide data through the COMPONENT_DATA injection token', async(() => {
     const homeRendering = {
       componentName: 'Home',
       fields: {
@@ -511,7 +517,7 @@ describe('Injection tokens', () => {
     });
   }));
 
-  it('should provide the component data injection token', () => {
+  it('should provide rendering through the COMPONENT_RENDERING injection token', () => {
     const homeRendering = {
       componentName: 'Home',
       fields: {
@@ -545,6 +551,36 @@ describe('Injection tokens', () => {
       const jumbotronComponent = fixture.debugElement.query(By.directive(TestJumbotronComponent));
       const jumbotronRenderingData = jumbotronComponent.injector.get(COMPONENT_RENDERING);
       expect(jumbotronRenderingData).toBe(jumbotronRendering);
+    });
+  });
+
+  it('should make injection tokens available to child components', () => {
+    const jumbotronRendering = {
+      componentName: 'Jumbotron',
+      fields: {
+        title: { value: 'Jumbotron title' },
+      },
+    };
+
+    const rendering = {
+      placeholders: {
+        main: [jumbotronRendering],
+      },
+    };
+
+    comp.name = 'main';
+    comp.rendering = rendering;
+
+    fixture.detectChanges();
+    fixture.whenStable().then(() => {
+      fixture.detectChanges();
+
+      const childComponent = fixture.debugElement.query(By.directive(TestJumbotronChildComponent));
+      const childComponentRenderingData = childComponent.injector.get(COMPONENT_RENDERING);
+      expect(childComponentRenderingData).toBe(jumbotronRendering);
+
+      const childComponentData = childComponent.injector.get(COMPONENT_DATA);
+      expect(childComponentData).toEqual({ data: 'Jumbotron data' });
     });
   });
 });
