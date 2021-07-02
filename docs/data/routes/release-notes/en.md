@@ -5,6 +5,128 @@ title: Release Notes
 ---
 # Release Notes
 
+## Sitecore JSS 16.0 for Sitecore 10
+
+### Upgrading
+
+There are [migration instructions](/upgrade-guides/16.0) from JSS 15-based applications.
+
+### Breaking changes
+* [PR #485](https://github.com/Sitecore/jss/pull/485) [JSS CLI] Add --config argument to specify the path to `scjssconfig.json` file. `resolveScJssConfig` now accepts arguments as an object instead of using individual arguments.
+* [PR #460](https://github.com/Sitecore/jss/pull/460) [sitecore-jss-react] Fix return type of `ComponentFactory` to allow a component definition instead of an instantiated component. `ComponentFactory` returns `ComponentType | null` instead of `Component`.
+* [PR #459](https://github.com/Sitecore/jss/pull/459) [sitecore-jss-react] Change propType of `missingComponentComponent` from `React.SFC` (deprecated) to `React.FC`.
+* [PR #538](https://github.com/Sitecore/jss/pull/538) [sitecore-jss-react] Change propType of `errorComponent` from `React.SFC` (deprecated) to `React.FC`.
+* [PR #517](https://github.com/Sitecore/jss/pull/517) [packages/samples] Migrate TSLint (deprecated) to ESLint.
+
+### New Features & Improvements
+* [Documentation](https://jss.sitecore.com/docs/nextjs/introduction/why-nextjs) Add support for Next.js framework. 🎉🎉🎉
+* [Commit](https://github.com/Sitecore/jss/commit/8f5966703d11c2ded3f86017942f31a6dbb5a0da) [sitecore-jss] Add `RestDictionaryService` to fetch dictionary data using the Sitecore Dictionary Service REST API, and `RestLayoutService` to fetch layout data using the Sitecore Layout Service REST API.
+* [PR #511](https://github.com/Sitecore/jss/pull/511) [sitecore-jss] Add `AxiosDataFetcher` to provide a default data fetcher implementation which can be used in sample apps.
+* [PR #530](https://github.com/Sitecore/jss/pull/530) [sitecore-jss] Add `GraphQLRequestClient` to provide the ability to execute GraphQL queries.
+* [PR #525](https://github.com/Sitecore/jss/pull/525) [sitecore-jss-react] Enable `SitecoreContext` to support TypeScript generics.
+* [PR #508](https://github.com/Sitecore/jss/pull/508) [sitecore-jss-react] Add the `useSitecoreContext` hook.
+* [PR #542](https://github.com/Sitecore/jss/pull/542) Add environment variable support via an `.env` file to the CLI.
+
+
+### Bug Fixes
+* [PR #548](https://github.com/Sitecore/jss/pull/548) [sitecore-jss-dev-tools] `jss deploy` doesn't exit on success.
+* [PR #541](https://github.com/Sitecore/jss/pull/541) [sitecore-jss-dev-tools][sitecore-jss-cli] Replace old and security vulnerable `request` and `axios` NPM packages with latest version of `axios` (>=0.21.1).
+* [PR #506](https://github.com/Sitecore/jss/pull/506) [React sample] `Cannot read property 'sitecore' of null`, when 404 and routeData is null.
+* [PR #575](https://github.com/Sitecore/jss/pull/575) [sitecore-jss-react] Specifying a custom error component via the Placeholder's `errorComponent` prop caused an "Invalid prop" error.
+* [PR #477](https://github.com/Sitecore/jss/pull/477) [sitecore-jss-proxy] Prevent passing 'qs' as 'undefined' in `rewriteRequestPath`.
+* [PR #459](https://github.com/Sitecore/jss/pull/459) [sitecore-jss-react] Fix propType of `missingComponentComponent`, resolving an issue with custom "Missing Component" components not working.
+* [PR #538](https://github.com/Sitecore/jss/pull/538) [sitecore-jss-react] Fix propType of `errorComponent`, resolving an issue with custom "Error" components not working.
+* [PR #521](https://github.com/Sitecore/jss/pull/521) [packages/samples] Upgrade react, react-dom.
+*
+## Sitecore JSS 15.0.1
+
+### Bug Fixes
+
+* [PR #487](https://github.com/Sitecore/jss/pull/487) [sitecore-jss-proxy][#CS0195052] changes to HEAD request handling
+* [PR #486](https://github.com/Sitecore/jss/pull/486) [sitecore-jss][mediaApi] Prevent editing of original query/params
+* [PR #483](https://github.com/Sitecore/jss/pull/483) [sitecore-jss-manifest] Process media field with single item recursively
+* [PR #484](https://github.com/Sitecore/jss/pull/484) [sitecore-jss-angular] Fix ngcc.config.js incorrect structure
+
+## Sitecore JSS 15.0 for Sitecore 10
+
+### Upgrading
+
+There are [migration instructions](/upgrade-guides/15.0) from JSS 14-based applications.
+
+### Breaking changes
+
+* [PR #414](https://github.com/Sitecore/jss/pull/414), [PR #456](https://github.com/Sitecore/jss/pull/456) React:
+    * SitecoreContextFactory class was removed. Subscribers were removed, so context value now stored in SitecoreContext state.
+    * SitecoreContext accepts `context` value instead of `contextFactory` SitecoreContextFactory instance.
+
+* [PR #440](https://github.com/Sitecore/jss/pull/440) [Angular sample] Upgrade angular to v10
+
+### New Features & Improvements
+
+* [PR #466](https://github.com/Sitecore/jss/pull/466) [sitecore-embedded-jss-app] Remove usage of SitecoreContextFactory
+* [PR #463](https://github.com/Sitecore/jss/pull/463) [React][Vue][Angular] Use keep-alive agent throughout sample apps for server-side web requests
+* [PR #430](https://github.com/Sitecore/jss/pull/430) [node-headless-proxy] Connection pooling to layout service
+* [PR #429](https://github.com/Sitecore/jss/pull/429) [node-headless-proxy] Output caching
+* [PR #386](https://github.com/Sitecore/jss/pull/386) [Forms] Assign contextItemId in Forms submit actions on a JSS Forms submit
+* [PR #390](https://github.com/Sitecore/jss/pull/390) [sitecore-jss-react] Replace line breaks with `<br/>` in the `<Text>` component
+* [PR #407](https://github.com/Sitecore/jss/pull/407) [React sample] enable eslint
+* [PR #413](https://github.com/Sitecore/jss/pull/413) [All samples] Add yaml-lint
+* [PR #419](https://github.com/Sitecore/jss/pull/419) [sitecore-jss-angular][sitecore-jss-react][sitecore-jss-vue] Provide ability to configure mediaUrlPrefix in mediaApi using `<Image />` component
+
+### Bug Fixes
+* [PR #478](https://github.com/Sitecore/jss/pull/478) [sitecore-jss] Merge specific params from layout service into query string
+* [Issue #326](https://github.com/Sitecore/jss/issues/326) [Angular sample] en.yml changes in Angular JSS app giving error: Duplicate function implementation
+* [PR #471](https://github.com/Sitecore/jss/pull/471) [node-headless-proxy] Upgrade lodash, node-fetch libraries
+* [PR #461](https://github.com/Sitecore/jss/pull/461) [node-headless-proxy] Remove use of onProxyReq event in sample proxy options
+* [Issue #452](https://github.com/Sitecore/jss/issues/452) [sitecore-jss-angular] ngcc config not correctly implemented
+* [PR #464](https://github.com/Sitecore/jss/pull/464) [Security] Review and resolve security vulnerabilities
+* [PR #456](https://github.com/Sitecore/jss/pull/456) [React sample] Race condition, under load React app may render HTML from a different route
+* [Issue #428](https://github.com/Sitecore/jss/issues/428) imageParams on Image react component don't play nice with allowedMediaParams
+* [PR #448](https://github.com/Sitecore/jss/pull/448) [node-headless-proxy] Extend headers handling and remove content-security-policy header 
+* [PR #444](https://github.com/Sitecore/jss/pull/444) [Vue sample] Fix i18n memory leak
+* [PR #414](https://github.com/Sitecore/jss/pull/414) [sitecore-jss-react] Memory leak in SitecoreContext
+* [Commit](https://github.com/Sitecore/jss/commit/88eb05ec0288c82bd8d4f24a647b8d5ba82b8ead) [Forms] Number Forms field has incorrect model and step attribute
+* [Issue #140](https://github.com/Sitecore/jss/issues/140) [sitecore-jss-proxy] query string values aren't transferred properly
+* [PR #391](https://github.com/Sitecore/jss/pull/391) [Angular sample] Component factory match first occurrence of Component name
+* [PR #379](https://github.com/Sitecore/jss/pull/379) [sitecore-jss-angular] Prevent existing anchor element classes from being wiped out by the link directive
+* [PR #395](https://github.com/Sitecore/jss/pull/395) [React sample] Retrieving language from ssrInitialState is incorrect
+* [PR #400](https://github.com/Sitecore/jss/pull/400) [sitecore-jss-proxy] Percentage symbol in query string breaks in SSR
+* [PR #401](https://github.com/Sitecore/jss/pull/401) [React sample] Application is broken when visit from /graphql to / in disconnected mode
+* [PR #403](https://github.com/Sitecore/jss/pull/403) [React sample] Doesn't work with url ip:port
+* [PR #404](https://github.com/Sitecore/jss/pull/404) [sitecore-jss-react][React sample] Fix invalid types, fix invalid type in data/*.yml
+* [PR #406](https://github.com/Sitecore/jss/pull/406) [sitecore-jss-angular] Prevent the Angular scLink directive from adding an empty href attribute
+* [PR #409](https://github.com/Sitecore/jss/pull/409) [sitecore-jss-angular] Prevent the Angular scLink directive from adding an href attribute, when href is equal to `http://` or `https://`
+
+SXA and Sitecore Forms compatibility table
+| Sitecore  | JSS      | SXA   | Forms
+| --------- | -------- |------ | ------
+| 10        | 15.0     | 10    | Yes
+| 10        | 14.0     | 10    | Yes
+| 9.3       | 13.1     | 9.3   | Yes
+| 9.3       | 13.0     | 9.3   | Yes
+| 9.2       | 12.0     | 1.9   | Yes
+| 9.1.1     | 11.1     | 1.9   | No
+| 9.1       | 11.0     | No    | No
+| 9.0       | 11.0     | No    | No
+
+## Sitecore JSS 14.0.4
+
+### Bug Fixes
+
+* [Commit](https://github.com/Sitecore/jss/commit/af1cd33170ca87b8c1e2b2ccfd520e720452983d) [sitecore-jss-rendering-host] Upgrade security vulnerable "yargs-parser"
+
+## Sitecore JSS 14.0.3
+
+### Bug Fixes
+
+* [PR #471](https://github.com/Sitecore/jss/pull/471) [node-headless-proxy] Upgrade lodash, node-fetch libraries
+
+## Sitecore JSS 14.0.2
+
+### Bug Fixes
+
+* [PR #455](https://github.com/Sitecore/jss/pull/455) [React sample] Race condition, under load React app may render HTML from a different route
+
 ## Sitecore JSS 14.0.1
 
 ### Bug Fixes
@@ -197,6 +319,11 @@ SXA and Sitecore Forms compatibility table
 | 9.1       | 11.0     | No    | No
 | 9.0       | 11.0     | No    | No
 
+## Sitecore JSS 11.0.4
+
+### Bug Fixes
+* [PR #453](https://github.com/Sitecore/jss/pull/453) [React sample] Race condition, under load React app may render HTML from a different route
+
 ## Sitecore JSS 11.0.3 for Sitecore 9.1.1
 
 ### Upgrading
@@ -318,7 +445,7 @@ There are [migration instructions](/upgrade-guides/manifest-packages) from JSS 8
 
 We've replaced Sitecore.Ship with a _manifest package_ deployment system that uses a more secure system to import JSS apps. A shared secret known to the deployer and server is used to deploy signed packages using HMAC, significantly increasing the security of the default setup. `jss setup` will offer to automatically create and configure a random shared secret for you.
 
-This change has also enabled improved code-first deployment experience. Logs are now sent in real-time, and the import process is run as a background job meaning that it can continue to completion even if a network level error interrupts the client. The import process also scales better to larger numbers of imported items, and is more cloud friendly. The server component installation experience is also now simpler, with a single Sitecore package for JSS server components. The import service endpoint is automatically disabled on CD servers, so no config transformation is required.
+This change has also enabled improved code-first deployment experience. Logs are now sent in real-time, and the import process is run as a background job meaning that it can continue to completion even if a network level error interrupts the client. The import process also scales better to larger numbers of imported items, and is more cloud friendly. The server component installation experience is also now simpler, with a single Sitecore package for Headless server components. The import service endpoint is automatically disabled on CD servers, so no config transformation is required.
 
 Existing JSS servers and apps running JSS 8 or earlier can follow [migration instructions](/upgrade-guides/manifest-packages) to upgrade to the JSS 9 manifest package endpoint for deployment.
 

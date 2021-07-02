@@ -14,17 +14,11 @@ import { LinkField } from './rendering-field';
 export class LinkDirective implements OnChanges {
   private inlineRef: HTMLSpanElement | null = null;
 
-  // tslint:disable-next-line:no-input-rename
-  @Input('scLinkEditable')
-  editable = true;
+  @Input('scLinkEditable') editable = true;
 
-  // tslint:disable-next-line:no-input-rename
-  @Input('scLinkAttrs')
-  attrs: any = {};
+  @Input('scLinkAttrs') attrs: any = {};
 
-  // tslint:disable-next-line:no-input-rename
-  @Input('scLink')
-  field: LinkField;
+  @Input('scLink') field: LinkField;
 
   constructor(
     protected viewContainer: ViewContainerRef,
@@ -34,7 +28,7 @@ export class LinkDirective implements OnChanges {
   ) {}
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['field'] || changes['editable'] || changes['attrs']) {
+    if (changes.field || changes.editable || changes.attrs) {
       this.viewContainer.clear();
       if (this.inlineRef) {
         this.inlineRef.remove();
@@ -61,9 +55,25 @@ export class LinkDirective implements OnChanges {
     const viewRef = this.viewContainer.createEmbeddedView(this.templateRef);
 
     viewRef.rootNodes.forEach((node) => {
-      Object.entries(props).forEach(([key, propValue]: [string, any]) =>
-        this.updateAttribute(node, key, propValue)
-      );
+      Object.entries(props).forEach(([key, propValue]: [string, any]) => {
+        if (key === 'href') {
+          const isInvalidLink = !propValue || /^https?:\/\/$/.test(propValue);
+
+          if (isInvalidLink) {
+            if (!node.href) {
+              return;
+            }
+
+            propValue = node.href;
+          }
+        }
+
+        if (key === 'class' && node.className) {
+          propValue += ` ${node.className}`;
+        }
+
+        this.renderer.setAttribute(node, key, propValue);
+      });
 
       if (node.childNodes && node.childNodes.length === 0 && linkText) {
         node.textContent = linkText;
@@ -82,7 +92,7 @@ export class LinkDirective implements OnChanges {
       ...this.attrs,
     };
     Object.entries(attrs).forEach(([key, attrValue]: [string, any]) =>
-      this.updateAttribute(span, key, attrValue)
+      this.renderer.setAttribute(span, key, attrValue)
     );
 
     this.viewContainer.createEmbeddedView(this.templateRef);
@@ -91,16 +101,6 @@ export class LinkDirective implements OnChanges {
     this.renderer.insertBefore(parentNode, span, this.elementRef.nativeElement);
 
     this.inlineRef = span;
-  }
-
-  protected updateAttribute(node: any, key: string, prop: any) {
-    if (prop != null && prop !== '') {
-      if (key === 'class' && node.className !== '') {
-        this.renderer.setAttribute(node, key, `${node.className} ${prop}`);
-      } else {
-        this.renderer.setAttribute(node, key, prop);
-      }
-    }
   }
 
   private getElementAttrs(): { [key: string]: any } {

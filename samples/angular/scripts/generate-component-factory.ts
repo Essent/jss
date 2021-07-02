@@ -17,8 +17,6 @@ const chokidar = require('chokidar');
   This is used during `jss start` to pick up new or removed components at runtime.
 */
 
-// tslint:disable:no-console
-
 const componentFactoryPath = path.resolve('src/app/components/app-components.module.ts');
 const componentRootPath = 'src/app/components';
 
@@ -80,7 +78,7 @@ function generateComponentFactory() {
 
     // ASSUMPTION: your component should export a class directly that follows Angular conventions,
     // i.e. `export class FooComponent` - so we can detect the component's name for auto registration.
-    const componentClassMatch = /export class (.+)Component/g.exec(componentFileContents);
+    const componentClassMatch = /export class (.+?)Component\b/g.exec(componentFileContents);
 
     if (componentClassMatch === null) {
       console.debug(
@@ -102,7 +100,6 @@ function generateComponentFactory() {
 
     if (isLazyLoaded) {
       console.debug(`Registering JSS component (lazy) ${componentName}`);
-      // tslint:disable-next-line:max-line-length
       lazyRegistrations.push(
         `{ path: '${componentName}', loadChildren: () => import('./${componentFolder}/${componentFolder}.module').then(m => m.${componentName}Module) },`
       );
@@ -121,7 +118,6 @@ function generateComponentFactory() {
 // Use app-components.shared.module.ts to modify the imports, etc of this module.
 // Note: code-generation is optional! See ./.gitignore for directions to remove it,
 // if you do not want it.
-// tslint:disable
 
 import { NgModule } from '@angular/core';
 import { JssModule } from '@sitecore-jss/sitecore-jss-angular';

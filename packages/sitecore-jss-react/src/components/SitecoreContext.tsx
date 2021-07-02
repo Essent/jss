@@ -1,95 +1,71 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
-
 import PropTypes from 'prop-types';
 import { ComponentFactory } from './sharedTypes';
 
-export interface SitecoreContextProps {
+export interface SitecoreContextProps<ContextType = any> {
   componentFactory: ComponentFactory;
-  contextFactory?: SitecoreContextFactory;
-  context?: any;
-  [k: string]: any;
+  context?: ContextType;
 }
 
-export class SitecoreContextFactory {
-  subscribers: any[] = [];
-  context: any;
-
-  constructor() {
-    this.context = {
-      pageEditing: false,
-    };
-  }
-
-  getSitecoreContext = () => {
-    return this.context;
-  }
-
-  subscribeToContext = (func: any) => {
-    this.subscribers.push(func);
-  }
-
-  unsubscribeFromContext = (func: any) => {
-    const index = this.subscribers.indexOf(func);
-    if (index >= 0) {
-      this.subscribers.splice(index, 1);
-    }
-  }
-
-  setSitecoreContext = (value: any) => {
-    this.context = value;
-    this.subscribers.forEach((func) => func(value));
-  }
+export interface SitecoreContextState<ContextType = any> {
+  setContext: (value: ContextType) => void;
+  context: ContextType;
 }
 
-export const SitecoreContextReactContext = React.createContext<SitecoreContextFactory>({} as SitecoreContextFactory);
-export const ComponentFactoryReactContext = React.createContext<ComponentFactory>({} as ComponentFactory);
+export const SitecoreContextReactContext = React.createContext<SitecoreContextState>(
+  {} as SitecoreContextState
+);
+export const ComponentFactoryReactContext = React.createContext<ComponentFactory>(
+  {} as ComponentFactory
+);
 
-export class SitecoreContext extends React.Component<SitecoreContextProps> {
+export class SitecoreContext<ContextType = any> extends React.Component<
+  SitecoreContextProps<ContextType>,
+  SitecoreContextState<ContextType>
+> {
   static propTypes = {
     children: PropTypes.any.isRequired,
     componentFactory: PropTypes.func,
-    contextFactory: PropTypes.object,
+    context: PropTypes.any,
   };
 
   static displayName = 'SitecoreContext';
 
-  componentFactory: ComponentFactory;
-  contextFactory: SitecoreContextFactory;
+  constructor(props: SitecoreContextProps<ContextType>) {
+    super(props);
 
-  constructor(props: SitecoreContextProps, context: any) {
-    super(props, context);
+    let context: any = {
+      pageEditing: false,
+    };
 
-    this.componentFactory = props.componentFactory;
-    if (props.contextFactory) {
-      this.contextFactory = props.contextFactory;
-    } else {
-      this.contextFactory = new SitecoreContextFactory();
+    if (props.context) {
+      context = props.context;
     }
 
-    // we force the children of the context to re-render when the context is updated
-    // even if the local props are unchanged; we assume the contents depend on the Sitecore context
-    this.contextFactory.subscribeToContext(this.contextListener);
+    if (props.context === null) {
+      context = null;
+    }
+
+    this.state = {
+      context,
+      setContext: this.setContext,
+    };
   }
 
-  contextListener = () => this.forceUpdate();
-
-  componentWillUnmount() {
-    this.contextFactory.unsubscribeFromContext(this.contextListener);
-  }
-
-  /**
-   * React Context Provider should accept Object instead of
-   * SitecoreContextFactory class instance
-   */
-  getSitecoreContextValue = () => ({ ...this.contextFactory });
+  setContext = (value: ContextType) => {
+    this.setState({
+      context: value,
+    });
+  };
 
   render() {
     return (
-    <ComponentFactoryReactContext.Provider value={this.componentFactory}>
-      <SitecoreContextReactContext.Provider value={this.getSitecoreContextValue()}>
-        {this.props.children}
-      </SitecoreContextReactContext.Provider>
-    </ComponentFactoryReactContext.Provider>
+      <ComponentFactoryReactContext.Provider value={this.props.componentFactory}>
+        <SitecoreContextReactContext.Provider value={this.state}>
+          {this.props.children}
+        </SitecoreContextReactContext.Provider>
+      </ComponentFactoryReactContext.Provider>
     );
   }
 }

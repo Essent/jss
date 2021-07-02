@@ -1,3 +1,4 @@
+/* eslint-disable @angular-eslint/no-conflicting-lifecycle */
 import { isPlatformServer } from '@angular/common';
 import {
   ChangeDetectorRef,
@@ -42,6 +43,10 @@ import { RenderEachDirective } from './render-each.directive';
 import { RenderEmptyDirective } from './render-empty.directive';
 import { isRawRendering } from './rendering';
 
+/**
+ * @param {ComponentRendering} rendering
+ * @param {string} name
+ */
 function getPlaceholder(rendering: ComponentRendering, name: string) {
   if (rendering && rendering.placeholders && Object.keys(rendering.placeholders).length > 0) {
     return rendering.placeholders[name];
@@ -57,7 +62,10 @@ export interface FactoryWithData {
 @Component({
   selector: 'sc-placeholder,[sc-placeholder]',
   template: `
-    <ng-template *ngIf="isLoading" [ngTemplateOutlet]="placeholderLoading?.templateRef"></ng-template>
+    <ng-template
+      *ngIf="isLoading"
+      [ngTemplateOutlet]="placeholderLoading?.templateRef"
+    ></ng-template>
     <ng-template #view></ng-template>
   `,
 })
@@ -83,12 +91,9 @@ export class PlaceholderComponent implements OnInit, OnChanges, DoCheck, OnDestr
   @Output()
   loaded = new EventEmitter<string | undefined>();
 
-  @ViewChild('view', { read: ViewContainerRef, static: true })
-  private view: ViewContainerRef;
-  @ContentChild(RenderEachDirective, { static: true })
-  renderEachTemplate: RenderEachDirective;
-  @ContentChild(RenderEmptyDirective, { static: true })
-  renderEmptyTemplate: RenderEmptyDirective;
+  @ViewChild('view', { read: ViewContainerRef, static: true }) private view: ViewContainerRef;
+  @ContentChild(RenderEachDirective, { static: true }) renderEachTemplate: RenderEachDirective;
+  @ContentChild(RenderEmptyDirective, { static: true }) renderEmptyTemplate: RenderEmptyDirective;
   @ContentChild(PlaceholderLoadingDirective, { static: true })
   placeholderLoading?: PlaceholderLoadingDirective;
 
@@ -135,7 +140,7 @@ export class PlaceholderComponent implements OnInit, OnChanges, DoCheck, OnDestr
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['rendering'] || changes['renderings']) {
+    if (changes.rendering || changes.renderings) {
       this._render();
     }
   }
@@ -192,9 +197,8 @@ export class PlaceholderComponent implements OnInit, OnChanges, DoCheck, OnDestr
     }
 
     if (!this.name && !this.renderings) {
-      // tslint:disable-next-line:max-line-length
       console.warn(
-        `Placeholder name was not specified, and explicit renderings array was not passed. Placeholder requires either name and rendering, or renderings.`
+        'Placeholder name was not specified, and explicit renderings array was not passed. Placeholder requires either name and rendering, or renderings.'
       );
       this.isLoading = false;
       return;

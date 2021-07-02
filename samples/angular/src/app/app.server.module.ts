@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { ServerModule, ServerTransferStateModule } from '@angular/platform-server';
-import { ModuleMapLoaderModule } from '@nguniversal/module-map-ngfactory-loader';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 
 import { AppModule } from './app.module';
@@ -15,14 +14,11 @@ import { JssTranslationServerLoaderService } from './i18n/jss-translation-server
     // by the ServerModule from @angular/platform-server.
     AppModule,
     ServerModule,
-    ModuleMapLoaderModule, // <-- *Important* to have lazy-loaded routes work
     ServerTransferStateModule,
     TranslateModule.forRoot({ // <-- *Important* to get translation values server-side
       loader: {
         provide: TranslateLoader,
-        useFactory: (ssrViewBag: any) => {
-          return new JssTranslationServerLoaderService(ssrViewBag);
-        },
+        useFactory: (ssrViewBag: any) => new JssTranslationServerLoaderService(ssrViewBag),
         deps: ['JSS_SERVER_VIEWBAG']
       }
     }),

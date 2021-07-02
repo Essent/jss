@@ -19,9 +19,9 @@ import {
 function GraphQLData(query, configuration = {}) {
   return function wrapComponent(Component) {
     class SitecoreRenderingWrapper extends React.Component {
-      static displayName = `JSSGraphQLComponent(${Component.displayName ||
-        Component.name ||
-        'Component'})`;
+      static displayName = `JSSGraphQLComponent(${
+        Component.displayName || Component.name || 'Component'
+      })`;
 
       render() {
         if (!query) {
@@ -78,8 +78,9 @@ function GraphQLData(query, configuration = {}) {
           resultProps[newConfiguration.name] = innerQuery;
 
           // run a user-specified props function too if one exists
-          if (configuration.props)
+          if (configuration.props) {
             resultProps = Object.assign(resultProps, configuration.props(props));
+          }
 
           return resultProps;
         };

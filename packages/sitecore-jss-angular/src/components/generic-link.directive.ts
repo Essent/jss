@@ -13,21 +13,13 @@ import { LinkField } from './rendering-field';
 
 @Directive({ selector: '[scGenericLink]' })
 export class GenericLinkDirective extends LinkDirective {
-  // tslint:disable-next-line:no-input-rename
-  @Input('scGenericLinkEditable')
-  editable = true;
+  @Input('scGenericLinkEditable') editable = true;
 
-  // tslint:disable-next-line:no-input-rename
-  @Input('scGenericLinkAttrs')
-  attrs: any = {};
+  @Input('scGenericLinkAttrs') attrs: any = {};
 
-  // tslint:disable-next-line:no-input-rename
-  @Input('scGenericLink')
-  field: LinkField;
+  @Input('scGenericLink') field: LinkField;
 
-  // tslint:disable-next-line:no-input-rename
-  @Input('scGenericLinkExtras')
-  extras?: NavigationExtras;
+  @Input('scGenericLinkExtras') extras?: NavigationExtras;
 
   constructor(
     viewContainer: ViewContainerRef,

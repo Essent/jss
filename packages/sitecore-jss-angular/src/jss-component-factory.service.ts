@@ -1,17 +1,12 @@
 import {
-  Compiler,
-  ComponentFactory,
+  Compiler, ComponentFactory,
   Inject,
   Injectable,
   Injector,
   NgModuleFactory,
-  NgModuleFactoryLoader,
-  Type,
+  Type
 } from '@angular/core';
-import { LoadChildren } from '@angular/router';
 import { ComponentRendering, HtmlElementRendering } from '@sitecore-jss/sitecore-jss';
-import { from, of } from 'rxjs';
-import { mergeMap, take } from 'rxjs/operators';
 import {
   ComponentNameAndModule,
   ComponentNameAndType,
@@ -19,11 +14,10 @@ import {
   JssCanActivate,
   JssResolve,
   PLACEHOLDER_COMPONENTS,
-  PLACEHOLDER_LAZY_COMPONENTS,
+  PLACEHOLDER_LAZY_COMPONENTS
 } from './components/placeholder.token';
 import { RawComponent } from './components/raw.component';
 import { isRawRendering } from './components/rendering';
-import { wrapIntoObservable } from './utils';
 
 export interface ComponentFactoryResult {
   componentImplementation?: Type<any>;
@@ -42,9 +36,8 @@ export class JssComponentFactoryService {
   private lazyComponentMap: Map<string, ComponentNameAndModule>;
 
   constructor(
-    private compiler: Compiler,
-    private loader: NgModuleFactoryLoader,
     private injector: Injector,
+    private compiler: Compiler,
     @Inject(PLACEHOLDER_COMPONENTS) private components: ComponentNameAndType[],
     @Inject(PLACEHOLDER_LAZY_COMPONENTS) private lazyComponents: ComponentNameAndModule[]
   ) {
@@ -56,6 +49,16 @@ export class JssComponentFactoryService {
     if (this.lazyComponents) {
       this.lazyComponents.forEach((c) => this.lazyComponentMap.set(c.path, c));
     }
+  }
+
+  private loadModuleFactory(lazyComponent: ComponentNameAndModule): Promise<NgModuleFactory<any>> {
+    return lazyComponent.loadChildren().then((loaded) => {
+      if (loaded instanceof NgModuleFactory) {
+        return loaded;
+      } else {
+        return this.compiler.compileModuleAsync(loaded);
+      }
+    });
   }
 
   getComponent(component: ComponentRendering): Promise<ComponentFactoryResult> {
@@ -72,16 +75,13 @@ export class JssComponentFactoryService {
     const lazyComponent = this.lazyComponentMap.get(component.componentName);
 
     if (lazyComponent) {
-      return this.loadModuleFactory(lazyComponent.loadChildren).then((ngModuleFactory) => {
+      return this.loadModuleFactory(lazyComponent).then((ngModuleFactory) => {
         let componentType = null;
         const moduleRef = ngModuleFactory.create(this.injector);
         const dynamicComponentType = moduleRef.injector.get(DYNAMIC_COMPONENT);
         if (!dynamicComponentType) {
           throw new Error(
-            // tslint:disable-next-line:max-line-length
-            `JssComponentFactoryService: Lazy load module for component "${
-              lazyComponent.path
-            }" missing DYNAMIC_COMPONENT provider. Missing JssModule.forChild()?`
+            `JssComponentFactoryService: Lazy load module for component "${lazyComponent.path}" missing DYNAMIC_COMPONENT provider. Missing JssModule.forChild()?`
           );
         }
 
@@ -92,10 +92,7 @@ export class JssComponentFactoryService {
             componentType = dynamicComponentType;
           } else {
             throw new Error(
-              // tslint:disable-next-line:max-line-length
-              `JssComponentFactoryService: Lazy load module for component "${
-                lazyComponent.path
-              }" missing DYNAMIC_COMPONENT provider. Missing JssModule.forChild()?`
+              `JssComponentFactoryService: Lazy load module for component "${lazyComponent.path}" missing DYNAMIC_COMPONENT provider. Missing JssModule.forChild()?`
             );
           }
         }
@@ -116,33 +113,13 @@ export class JssComponentFactoryService {
     });
   }
 
-  private loadModuleFactory(loadChildren: LoadChildren): Promise<NgModuleFactory<any>> {
-    if (typeof loadChildren === 'string') {
-      return this.loader.load(loadChildren);
-    } else {
-      return wrapIntoObservable(loadChildren())
-        .pipe(
-          mergeMap((t: any) => {
-            if (t instanceof NgModuleFactory) {
-              return of(t);
-            } else {
-              return from(this.compiler.compileModuleAsync(t));
-            }
-          }),
-          take(1)
-        )
-        .toPromise();
-    }
-  }
-
   getComponents(
     components: Array<ComponentRendering | HtmlElementRendering>
   ): Promise<ComponentFactoryResult[]> {
     // acquire all components and keep them in order while handling their potential async-ness
     return Promise.all(
-      components.map(
-        (component) =>
-          isRawRendering(component) ? this.getRawComponent(component) : this.getComponent(component)
+      components.map((component) =>
+        isRawRendering(component) ? this.getRawComponent(component) : this.getComponent(component)
       )
     );
   }

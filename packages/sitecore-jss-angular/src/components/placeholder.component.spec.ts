@@ -21,7 +21,7 @@ import {
   selector: 'test-placeholder',
   template: `
     <sc-placeholder [name]="name" [rendering]="rendering">
-      <img *scPlaceholderLoading src="loading.gif">
+      <img *scPlaceholderLoading src="loading.gif" />
     </sc-placeholder>
   `,
 })
@@ -58,7 +58,7 @@ class TestHomeComponent {
 
 @Component({
   selector: 'test-jumbotron',
-  template: ``,
+  template: '',
 })
 class TestJumbotronComponent {}
 
@@ -263,7 +263,12 @@ describe('<sc-placeholder />', () => {
 @Component({
   selector: 'test-parent',
   template: `
-    <sc-placeholder [name]="name" [rendering]="rendering" [inputs]="inputs" [outputs]="outputs"></sc-placeholder>
+    <sc-placeholder
+      [name]="name"
+      [rendering]="rendering"
+      [inputs]="inputs"
+      [outputs]="outputs"
+    ></sc-placeholder>
     {{ clickMessage }}
   `,
 })

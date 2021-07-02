@@ -60,7 +60,7 @@ export class RenderComponentComponent implements OnChanges {
   ) {}
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['rendering']) {
+    if (changes.rendering) {
       this._render();
     }
   }

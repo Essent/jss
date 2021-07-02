@@ -1,4 +1,13 @@
-import { Directive, ElementRef, Input, OnChanges, Renderer2, SimpleChanges, TemplateRef, ViewContainerRef } from '@angular/core';
+import {
+  Directive,
+  ElementRef,
+  Input,
+  OnChanges,
+  Renderer2,
+  SimpleChanges,
+  TemplateRef,
+  ViewContainerRef,
+} from '@angular/core';
 import { mediaApi } from '@sitecore-jss/sitecore-jss';
 import { ImageField } from './rendering-field';
 
@@ -6,16 +15,21 @@ import { ImageField } from './rendering-field';
 export class ImageDirective implements OnChanges {
   private inlineRef: HTMLSpanElement | null = null;
 
-  // tslint:disable-next-line:no-input-rename
   @Input('scImage') field: ImageField | '';
 
-  // tslint:disable-next-line:no-input-rename
   @Input('scImageEditable') editable = true;
 
-  // tslint:disable-next-line:no-input-rename
+  /**
+   * Custom regexp that finds media URL prefix that will be replaced by `/-/jssmedia` or `/~/jssmedia`.
+   * @example
+   * /\/([-~]{1})assets\//i
+   * /-assets/website -> /-/jssmedia/website
+   * /~assets/website -> /~/jssmedia/website
+   */
+  @Input('scImageMediaUrlPrefix') mediaUrlPrefix?: RegExp;
+
   @Input('scImageUrlParams') urlParams = {};
 
-  // tslint:disable-next-line:no-input-rename
   @Input('scImageAttrs') attrs = {};
 
   constructor(
@@ -23,10 +37,10 @@ export class ImageDirective implements OnChanges {
     private templateRef: TemplateRef<any>,
     private renderer: Renderer2,
     private elementRef: ElementRef
-  ) { }
+  ) {}
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['field'] || changes['editable'] || changes['urlParams'] || changes['attrs']) {
+    if (changes.field || changes.editable || changes.urlParams || changes.attrs) {
       this.viewContainer.clear();
       if (this.inlineRef) {
         this.inlineRef.remove();
@@ -85,7 +99,7 @@ export class ImageDirective implements OnChanges {
       ...fieldAttrs,
       ...parsedAttrs,
     };
-    // tslint:disable-next-line:prefer-const
+    // eslint-disable-next-line prefer-const
     let { src, srcSet, ...otherAttrs } = combinedAttrs;
     if (!src) {
       return null;
@@ -94,10 +108,10 @@ export class ImageDirective implements OnChanges {
       ...otherAttrs,
     };
     // update image URL for jss handler and image rendering params
-    src = mediaApi.updateImageUrl(src, imageParams);
+    src = mediaApi.updateImageUrl(src, imageParams, this.mediaUrlPrefix);
     if (srcSet) {
       // replace with HTML-formatted srcset, including updated image URLs
-      newAttrs.srcSet = mediaApi.getSrcSet(src, srcSet, imageParams);
+      newAttrs.srcSet = mediaApi.getSrcSet(src, srcSet, imageParams, this.mediaUrlPrefix);
     } else {
       newAttrs.src = src;
     }
@@ -107,17 +121,19 @@ export class ImageDirective implements OnChanges {
   private renderTemplate(imageProps: any) {
     const viewRef = this.viewContainer.createEmbeddedView(this.templateRef);
     viewRef.rootNodes.forEach((node) => {
-      Object.entries(imageProps).forEach(([key, imgPropVal]: [string, any]) => this.renderer.setAttribute(node, key, imgPropVal));
+      Object.entries(imageProps).forEach(([key, imgPropVal]: [string, any]) =>
+        this.renderer.setAttribute(node, key, imgPropVal)
+      );
     });
   }
 
-  private getElementAttrs(): { [key: string]: any; } {
+  private getElementAttrs(): { [key: string]: any } {
     const view = this.templateRef.createEmbeddedView(null);
     const element: Element = view.rootNodes[0];
     if (!element) {
       return {};
     }
-    const attrs: { [key: string]: any; } = {};
+    const attrs: { [key: string]: any } = {};
     for (let i = 0; i < element.attributes.length; i++) {
       const attr = element.attributes.item(i);
       if (attr) {

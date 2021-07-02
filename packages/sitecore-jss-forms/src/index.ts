@@ -22,6 +22,7 @@ export {
   StringInputViewModel,
   MultiLineStringInputViewModel,
   DateInputViewModel,
+  NumberInputViewModel,
   TitleFieldViewModel,
   ListFieldItem,
   ListViewModel,
@@ -30,14 +31,19 @@ export {
   instanceOfListViewModel,
   instanceOfInputViewModel,
 } from './ViewModel';
-export { submitForm, createFetchBasedFormFetcher, FormSubmitOptions, FormFetcher } from './submitForm';
+export {
+  submitForm,
+  createFetchBasedFormFetcher,
+  FormSubmitOptions,
+  FormFetcher,
+} from './submitForm';
 export { getFieldValueFromModel } from './getFieldValueFromModel';
 export {
   FormTracker,
   FormTrackerOptions,
   TrackingEvent,
   createFetchBasedTrackerFetcher,
-  TrackerFetcher
+  TrackerFetcher,
 } from './FormTracker';
 
 export { FormResult, FieldValidationErrors } from './FormResult';

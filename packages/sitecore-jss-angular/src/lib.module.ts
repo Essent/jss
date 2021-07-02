@@ -1,6 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import {
-  ANALYZE_FOR_ENTRY_COMPONENTS,
   Injector,
   ModuleWithProviders,
   NgModule,
@@ -80,8 +79,9 @@ export class JssModule {
   /**
    * Instantiates the JSS module with no component factory.
    * Useful for using it from libraries. Most of the time you'd want withComponents()
+   * @returns {ModuleWithProviders<JssModule>} module
    */
-  static forRoot(): ModuleWithProviders {
+  static forRoot(): ModuleWithProviders<JssModule> {
     return {
       ngModule: JssModule,
       providers: [
@@ -102,12 +102,15 @@ export class JssModule {
     };
   }
 
-  /** Instantiates a module for a lazy-loaded JSS component */
-  static forChild(component: Type<any>): ModuleWithProviders {
+  /**
+   * Instantiates a module for a lazy-loaded JSS component
+   * @param {Type<any>} component
+   * @returns {ModuleWithProviders<JssModule>} module
+   */
+  static forChild(component: Type<any>): ModuleWithProviders<JssModule> {
     return {
       ngModule: JssModule,
       providers: [
-        { provide: ANALYZE_FOR_ENTRY_COMPONENTS, useValue: component, multi: true },
         { provide: ROUTES, useValue: [], multi: true },
         { provide: DYNAMIC_COMPONENT, useValue: component },
       ],
@@ -117,19 +120,17 @@ export class JssModule {
   /**
    * Instantiates the JSS module and specifies the mapping from component name to component implementation.
    * Appropriate when defining the set of JSS components that your app is aware of.
+   * @param {ComponentNameAndType[]} components
+   * @param {ComponentNameAndModule[]} [lazyComponents]
+   * @returns {ModuleWithProviders<JssModule>} module
    */
   static withComponents(
     components: ComponentNameAndType[],
     lazyComponents?: ComponentNameAndModule[]
-  ): ModuleWithProviders {
+  ): ModuleWithProviders<JssModule> {
     return {
       ngModule: JssModule,
       providers: [
-        {
-          provide: ANALYZE_FOR_ENTRY_COMPONENTS,
-          useValue: components,
-          multi: true,
-        },
         { provide: PLACEHOLDER_COMPONENTS, useValue: components },
         { provide: PLACEHOLDER_LAZY_COMPONENTS, useValue: lazyComponents || [] },
         { provide: ROUTES, useValue: lazyComponents || [], multi: true },
