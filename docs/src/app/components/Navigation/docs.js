@@ -208,6 +208,10 @@ export default {
               url: 'node-certificates',
               displayName: 'Sitecore CA certificates for Node.js',
             },
+            {
+              url: 'debug-logging',
+              displayName: 'Debug logging',
+            },
           ],
         },
       ],
@@ -289,6 +293,10 @@ export default {
             {
               url: 'headless-mode-ssr',
               displayName: 'via Headless Mode',
+            },
+            {
+              url: 'ssr-experience-edge',
+              displayName: 'using Experience Edge',
             },
             {
               url: 'server-rendering-viewbag',

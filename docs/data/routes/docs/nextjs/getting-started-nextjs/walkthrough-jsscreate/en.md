@@ -13,7 +13,7 @@ We recommend this approach for Sitecore developers who use the [code-first devel
 
 ## TL;DR
 
-To quickly scaffold a JSS Next.js application, run the following commands in a terminal:
+To quickly scaffold a JSS Next.js application with default configuration, run the following commands in a terminal:
 
 ```
 npm install -g @sitecore-jss/sitecore-jss-cli
@@ -21,6 +21,10 @@ jss create my-first-jss-app nextjs
 cd my-first-jss-app
 jss start
 ```
+
+> To ensure that your new JSS application is compatible with your licensed Sitecore XP version, consult the [compatibility table](https://support.sitecore.com/kb?id=kb_article_view&sysparm_article=KB0541788). 
+> 
+> To create an application using a previous version of JSS, see an example in the [JSS CLI reference](/docs/fundamentals/cli).
 
 ##  Create your application
 
@@ -34,15 +38,23 @@ To create a JSS application, you must:
    npm install -g @sitecore-jss/sitecore-jss-cli
    ```
 
-   > To verify the successful installation of the JSS CLI and to see the list of commands availably globally, run `jss --help`.
+   > To verify the successful installation of the JSS CLI and to see the list of commands availability globally, run `jss --help`.
 
 3. Run:
 
    ```
-    jss create my-first-jss-app nextjs
+    jss create my-first-jss-app nextjs [--fetchWith {REST|GraphQL}] [--prerender {SSG|SSR}]
    ```
 
    The command will create the JSS Next.js application and install the required packages. 
+   
+   > For more information on `jss create` see [the JSS CLI reference](/docs/fundamentals/cli).
+    
+
+   
+   > To ensure that your new JSS application is compatible with your licensed Sitecore XP version, consult the [compatibility table](https://support.sitecore.com/kb?id=kb_article_view&sysparm_article=KB0541788).  
+   > 
+   > To create an application using a previous version of JSS, see an example in the [JSS CLI reference](/docs/fundamentals/cli).
 
 ## Run your application
 
@@ -63,7 +75,5 @@ Sitecore requires Windows, but the instance can be on a virtual machine or a rem
 To connect your application to Sitecore, you must:
 
 1. [Setup JSS Server Components](/docs/client-frameworks/getting-started/jss-server-install).
-2. Run `jss deploy items`.
-
-
-
+2. [Deploy the application to a Sitecore environment](/docs/client-frameworks/getting-started/app-deployment).
+3. [Connect to the Experience Editor](/docs/nextjs/experience-editor/walkthrough).

@@ -30,6 +30,7 @@ export { JssModule } from './lib.module';
 export {
   dataApi,
   mediaApi,
+  constants,
   isExperienceEditorActive,
   resetExperienceEditorChromes,
   LayoutServiceData,
@@ -43,7 +44,7 @@ export {
   ComponentRendering,
   ComponentFields,
   ComponentParams,
-  HttpJsonFetcher,
+  HttpDataFetcher,
   HttpResponse,
   isServer,
 } from '@sitecore-jss/sitecore-jss';

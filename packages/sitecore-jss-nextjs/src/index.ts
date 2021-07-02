@@ -1,28 +1,38 @@
 export {
   dataApi,
   mediaApi,
-  isExperienceEditorActive,
-  resetExperienceEditorChromes,
+  constants,
+  // generic data access
+  HttpDataFetcher,
+  HttpResponse,
   AxiosDataFetcher,
   AxiosDataFetcherConfig,
-  LayoutService,
-  RestLayoutService,
-  RestLayoutServiceConfig,
+  // dictionary service
   DictionaryPhrases,
-  DictionaryServiceData,
   DictionaryService,
+  GraphQLRequestClient,
+  GraphQLDictionaryService,
+  GraphQLDictionaryServiceConfig,
   RestDictionaryService,
   RestDictionaryServiceConfig,
+  // layout service
+  LayoutService,
   LayoutServiceData,
   LayoutServicePageState,
   LayoutServiceContext,
   LayoutServiceContextData,
+  LayoutServiceRequestOptions,
+  GraphQLLayoutService,
+  GraphQLLayoutServiceConfig,
+  RestLayoutService,
+  RestLayoutServiceConfig,
+  isExperienceEditorActive,
+  resetExperienceEditorChromes,
   PlaceholdersData,
   RouteData,
   Field,
   Item,
   HtmlElementRendering,
-  LayoutServiceRequestOptions,
   getChildPlaceholder,
   getFieldValue,
   ComponentRendering,
@@ -31,8 +41,6 @@ export {
 } from '@sitecore-jss/sitecore-jss';
 
 export { ManifestInstance } from '@sitecore-jss/sitecore-jss-manifest';
-
-export * from './constants';
 
 export {
   ComponentPropsCollection,
@@ -51,7 +59,7 @@ export {
   GraphQLSitemapServiceConfig,
 } from './services/graphql-sitemap-service';
 
-export { StaticPath } from './sharedTypes/sitemap';
+export { StaticPath } from './services/graphql-sitemap-service';
 
 export {
   ComponentPropsReactContext,
@@ -60,7 +68,7 @@ export {
   useComponentProps,
 } from './components/ComponentPropsContext';
 
-export { handleExperienceEditorFastRefresh } from './utils';
+export { handleExperienceEditorFastRefresh, getPublicUrl } from './utils';
 
 export { EditingData, EditingPreviewData, isEditingData } from './sharedTypes/editing-data';
 export {
@@ -91,4 +99,5 @@ export {
   useSitecoreContext,
   withExperienceEditorChromes,
   withPlaceholder,
+  withDatasourceCheck,
 } from '@sitecore-jss/sitecore-jss-react';

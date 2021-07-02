@@ -6,12 +6,23 @@ title: Documentation
 
 # Troubleshooting
 
+- [Debug logging](#debug-logging)
 - [General setup checklist](#general-setup-checklist)
 - [Server-side JavaScript errors](#server-side-javascript-errors)
 - [Errors regarding SSL certificates](#errors-regarding-ssl-certificates)
 - [Errors deploying a JSS app locally](#errors-deploying-a-jss-app-locally)
 - [Data-fetching issues](#data-fetching-issues)
 - [Errors in GraphiQL](#errors-in-graphiql)
+
+## Debug logging
+
+You can enable debug logging of the Sitecore JSS npm packages by setting the `DEBUG` environment variable. In your `.env` (or `.env.local` for local environments), add the following line:
+
+```
+DEBUG=sitecore-jss:*
+```
+
+This will output _all_ debug logs. However, you may wish to be more selective. Refer to [Debug logging](/docs/fundamentals/troubleshooting/debug-logging) for additional details.
 
 ## General setup checklist
 
@@ -41,7 +52,7 @@ If you encounter unexpected JavaScript errors during the `npm install` or `build
 node -v
 npm -v
 ```
-Note that we test JSS using the **Long Term Support (TLS) versions of Node**. These are typically one major version behind the latest official Node version.
+Note that we test JSS using the **Long Term Support (LTS) versions of Node**. These are typically one major version behind the latest official Node version.
 
 Note that the Node/npm version used by your CI/Production environments may differ from the version your local environment uses. When a project configuration does not require a specific Node/npm version in `package.json`, deployment agents commonly build using the most recent version available or an environment-specific "default" version.
 
@@ -168,9 +179,9 @@ These are less common issues that we have encountered.
 
 If the GraphQL schema changes, you must regenerate GraphQL introspection data. 
 
-In the sample app, you regenerate introspection data using the command `npm run graphql:update`.
+In the sample app, you regenerate introspection data using the command `jss graphql:update`.
 
-> The scripts that this calls depends on the `scjssconfig.json` file being present and populated.
+> The script that this calls depends on the `scjssconfig.json` file being present and populated.
 
 ### Vercel unable to show data from a local Sitecore environment
 If you are using [ngrok](https://ngrok.com/) to expose your local Sitecore endpoint to Vercel, verify that you are using the `host-header` flag.

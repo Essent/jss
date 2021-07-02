@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { AxiosDataFetcher } from '@sitecore-jss/sitecore-jss';
+import { STATIC_PROPS_ID, SERVER_PROPS_ID } from 'next/constants';
+import { AxiosDataFetcher, debug } from '@sitecore-jss/sitecore-jss';
 import { EditingData } from '../sharedTypes/editing-data';
 import { EditingDataService, editingDataService } from '../services/editing-data-service';
 import { QUERY_PARAM_EDITING_SECRET } from '../services/editing-data-service';
@@ -55,7 +56,8 @@ export class EditingRenderMiddleware {
    */
   constructor(config?: EditingRenderMiddlewareConfig) {
     this.editingDataService = config?.editingDataService ?? editingDataService;
-    this.dataFetcher = config?.dataFetcher ?? new AxiosDataFetcher();
+    this.dataFetcher =
+      config?.dataFetcher ?? new AxiosDataFetcher({ debugger: debug.experienceEditor });
     this.resolvePageUrl = config?.resolvePageUrl ?? this.defaultResolvePageUrl;
     this.resolveServerUrl = config?.resolveServerUrl ?? this.defaultResolveServerUrl;
   }
@@ -69,9 +71,17 @@ export class EditingRenderMiddleware {
   }
 
   private handler = async (req: NextApiRequest, res: NextApiResponse): Promise<void> => {
-    const { method, query, body } = req;
+    const { method, query, body, headers } = req;
+
+    debug.experienceEditor('editing render middleware start: %o', {
+      method,
+      query,
+      headers,
+      body,
+    });
 
     if (method !== 'POST') {
+      debug.experienceEditor('invalid method - sent %s expected POST', method);
       res.setHeader('Allow', 'POST');
       return res.status(405).json({
         html: `<html><body>Invalid request method '${method}'</body></html>`,
@@ -81,6 +91,11 @@ export class EditingRenderMiddleware {
     // Validate secret
     const secret = query[QUERY_PARAM_EDITING_SECRET] ?? body?.jssEditingSecret;
     if (secret !== getJssEditingSecret()) {
+      debug.experienceEditor(
+        'invalid editing secret - sent "%s" expected "%s"',
+        secret,
+        getJssEditingSecret()
+      );
       return res.status(401).json({
         html: '<html><body>Missing or invalid secret</body></html>',
       });
@@ -96,7 +111,7 @@ export class EditingRenderMiddleware {
       // Stash for use later on (i.e. within getStatic/ServerSideProps).
       // This ultimately gets stored on disk (using our EditingDataDiskCache) for compatibility with Vercel Serverless Functions.
       // Note we can't set this directly in setPreviewData since it's stored as a cookie (2KB limit)
-      // https://nextjs.org/docs/advanced-features/preview-mode#previewdata-size-limits
+      // https://nextjs.org/docs/advanced-features/preview-mode#previewdata-size-limits)
       const previewData = await this.editingDataService.setEditingData(editingData, serverUrl);
 
       // Enable Next.js Preview Mode, passing our preview data (i.e. editingData cache key)
@@ -108,6 +123,7 @@ export class EditingRenderMiddleware {
       // Make actual render request for page route, passing on preview cookies.
       // Note timestamp effectively disables caching the request in Axios (no amount of cache headers seemed to do it)
       const requestUrl = this.resolvePageUrl(serverUrl, editingData.path);
+      debug.experienceEditor('fetching page route for %s', editingData.path);
       const pageRes = await this.dataFetcher.get<string>(`${requestUrl}?timestamp=${Date.now()}`, {
         headers: {
           Cookie: cookies.join(';'),
@@ -122,8 +138,19 @@ export class EditingRenderMiddleware {
       // show correct placeholders, so save and refresh won't be needed after adding each rendering
       html = html.replace(new RegExp('phkey', 'g'), 'key');
 
+      // When SSG, Next will attempt to perform a router.replace on the client-side to inject the query string parms
+      // to the router state. See https://github.com/vercel/next.js/blob/v10.0.3/packages/next/client/index.tsx#L169.
+      // However, this doesn't really work since at this point we're in the editor and the location.search has nothing
+      // to do with the Next route/page we've rendered. Beyond the extraneous request, this can result in a 404 with
+      // certain route configurations (e.g. multiple catch-all routes).
+      // The following line will trick it into thinking we're SSR, thus avoiding any router.replace.
+      html = html.replace(STATIC_PROPS_ID, SERVER_PROPS_ID);
+
+      const body = { html };
+
       // Return expected JSON result
-      res.status(200).json({ html });
+      debug.experienceEditor('editing render middleware end: %o', { status: 200, body });
+      res.status(200).json(body);
     } catch (error) {
       console.error(error);
 
