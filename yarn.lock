@@ -253,36 +253,37 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@angular-eslint/bundled-angular-compiler@npm:16.3.1":
-  version: 16.3.1
-  resolution: "@angular-eslint/bundled-angular-compiler@npm:16.3.1"
-  checksum: d94d1dc4b530e469d2cd36f4a052504c0abab46d25edd0561949e0d76e6e781a052327a52132101a6650fbe9a518b9bbb14ed798d36b1a62384cfb23f69c91b7
+"@angular-eslint/bundled-angular-compiler@npm:18.3.0":
+  version: 18.3.0
+  resolution: "@angular-eslint/bundled-angular-compiler@npm:18.3.0"
+  checksum: f0f006234fb773f654561a6430573d5c78b4c607ba54de7b3c2e43d6bef38f6d4a936eae6543d0a459179be2a57b18930960d2050155976531dc8d86292868fc
   languageName: node
   linkType: hard
 
-"@angular-eslint/eslint-plugin@npm:^16.3.1":
-  version: 16.3.1
-  resolution: "@angular-eslint/eslint-plugin@npm:16.3.1"
+"@angular-eslint/eslint-plugin@npm:^18.3.0":
+  version: 18.3.0
+  resolution: "@angular-eslint/eslint-plugin@npm:18.3.0"
   dependencies:
-    "@angular-eslint/utils": 16.3.1
-    "@typescript-eslint/utils": 5.62.0
+    "@angular-eslint/bundled-angular-compiler": 18.3.0
+    "@angular-eslint/utils": 18.3.0
   peerDependencies:
-    eslint: ^7.20.0 || ^8.0.0
+    "@typescript-eslint/utils": ^7.11.0 || ^8.0.0
+    eslint: ^8.57.0 || ^9.0.0
     typescript: "*"
-  checksum: ef0524a7bd4e021692e264d907aee3fe39879db885ba19e73cee2211ea16f23a878e812f0edb99b10d04d9ee2fb5acc0a74e2abc038d645dfc44abc5af84d097
+  checksum: 63fa401d5551b236d1987128da3048b6343477b37d7a899ca4c7475ecaae81319c73a0e55dcd1e09b08d035761c2dcfe4e1660f32424399a36ebc82edce36752
   languageName: node
   linkType: hard
 
-"@angular-eslint/utils@npm:16.3.1":
-  version: 16.3.1
-  resolution: "@angular-eslint/utils@npm:16.3.1"
+"@angular-eslint/utils@npm:18.3.0":
+  version: 18.3.0
+  resolution: "@angular-eslint/utils@npm:18.3.0"
   dependencies:
-    "@angular-eslint/bundled-angular-compiler": 16.3.1
-    "@typescript-eslint/utils": 5.62.0
+    "@angular-eslint/bundled-angular-compiler": 18.3.0
   peerDependencies:
-    eslint: ^7.20.0 || ^8.0.0
+    "@typescript-eslint/utils": ^7.11.0 || ^8.0.0
+    eslint: ^8.57.0 || ^9.0.0
     typescript: "*"
-  checksum: b2af424995c0ea05c31c104e6aafbb217d73c8af2bbb9bd30eed9fc3d9c7d9a0d98989ee654c33d80078b619e15f0b358f4987b0024943af223af0ea9f5495fe
+  checksum: eb574ba7aae454da7ec5716f3992b0e95f87409de9ded50f8609741aa8011808895a1fc4ccdc7614a77ea8a6e021110a1b514c436886ebb3a5cdfbf6e176ecaa
   languageName: node
   linkType: hard
 
@@ -7053,7 +7054,7 @@ __metadata:
   resolution: "@sitecore-jss/sitecore-jss-angular@workspace:packages/sitecore-jss-angular"
   dependencies:
     "@angular-devkit/build-angular": ~18.2.1
-    "@angular-eslint/eslint-plugin": ^16.3.1
+    "@angular-eslint/eslint-plugin": ^18.3.0
     "@angular/cli": ~18.2.1
     "@angular/common": ~18.2.1
     "@angular/compiler": ~18.2.1
@@ -8792,7 +8793,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript-eslint/utils@npm:5.62.0, @typescript-eslint/utils@npm:^5.57.0":
+"@typescript-eslint/utils@npm:^5.57.0":
   version: 5.62.0
   resolution: "@typescript-eslint/utils@npm:5.62.0"
   dependencies:
