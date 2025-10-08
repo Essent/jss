@@ -1,17 +1,9 @@
 import { DatePipe } from '@angular/common';
-import {
-  Directive,
-  Input,
-  OnChanges,
-  SimpleChanges,
-  TemplateRef,
-  Type,
-  ViewContainerRef,
-} from '@angular/core';
-import { DateField } from './rendering-field';
+import { Directive, inject, Input, OnChanges, SimpleChanges, TemplateRef } from '@angular/core';
+import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
 import { BaseFieldDirective } from './base-field.directive';
 import { DefaultEmptyFieldEditingComponent } from './default-empty-text-field-editing-placeholder.component';
-import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
+import { DateField } from './rendering-field';
 
 @Directive({
   selector: '[scDate]',
@@ -35,15 +27,13 @@ export class DateDirective extends BaseFieldDirective implements OnChanges {
   /**
    * Default component to render in Pages in Metadata edit mode if field value is empty and emptyFieldEditingTemplate is not provided
    */
-  protected defaultFieldEditingComponent: Type<unknown>;
+  protected defaultFieldEditingComponent = DefaultEmptyFieldEditingComponent;
 
-  constructor(
-    viewContainer: ViewContainerRef,
-    private templateRef: TemplateRef<unknown>,
-    private datePipe: DatePipe
-  ) {
-    super(viewContainer);
-    this.defaultFieldEditingComponent = DefaultEmptyFieldEditingComponent;
+  private readonly templateRef: TemplateRef<unknown> = inject(TemplateRef);
+  private readonly datePipe: DatePipe = inject(DatePipe);
+
+  constructor() {
+    super();
   }
 
   ngOnChanges(changes: SimpleChanges) {

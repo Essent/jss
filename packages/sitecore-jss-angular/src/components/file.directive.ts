@@ -1,6 +1,7 @@
 import {
   Directive,
   EmbeddedViewRef,
+  inject,
   Input,
   OnChanges,
   SimpleChanges,
@@ -16,9 +17,10 @@ import { FileField } from './rendering-field';
 export class FileDirective implements OnChanges {
   @Input('scFile') field: FileField;
 
-  private viewRef: EmbeddedViewRef<unknown>;
+  private viewRef?: EmbeddedViewRef<unknown>;
 
-  constructor(private viewContainer: ViewContainerRef, private templateRef: TemplateRef<unknown>) {}
+  private readonly templateRef: TemplateRef<unknown> = inject(TemplateRef);
+  private readonly viewContainer: ViewContainerRef = inject(ViewContainerRef);
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.field) {
@@ -39,7 +41,7 @@ export class FileDirective implements OnChanges {
     }
 
     const file = field.src ? field : field.value;
-    this.viewRef.rootNodes.forEach((node) => {
+    this.viewRef?.rootNodes.forEach((node) => {
       if (!file) return;
 
       node.href = file.src;

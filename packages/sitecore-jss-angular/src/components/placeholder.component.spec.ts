@@ -3,6 +3,7 @@ import {
   Component,
   DebugElement,
   EventEmitter,
+  inject,
   Injectable,
   input,
   Input,
@@ -525,7 +526,7 @@ class TestLazyPlaceholderComponent {
 
 @Injectable()
 class MockUrlTreeGuard implements JssCanActivate {
-  constructor(private readonly router: Router) {}
+  private readonly router = inject(Router);
 
   canActivate() {
     return this.router.parseUrl('/404');
@@ -534,7 +535,7 @@ class MockUrlTreeGuard implements JssCanActivate {
 
 @Injectable()
 class MockRedirectCommandGuard implements JssCanActivate {
-  constructor(private readonly router: Router) {}
+  private readonly router = inject(Router);
 
   canActivate() {
     return new RedirectCommand(this.router.parseUrl('/404'));

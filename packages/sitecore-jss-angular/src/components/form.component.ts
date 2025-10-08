@@ -1,19 +1,19 @@
 /* eslint-disable prefer-const */
-import { ComponentRendering, LayoutServicePageState } from '@sitecore-jss/sitecore-jss/layout';
-import { form, debug } from '@sitecore-jss/sitecore-jss';
+import { isPlatformBrowser } from '@angular/common';
 import {
   Component,
-  OnInit,
-  Input,
-  Inject,
   ElementRef,
-  PLATFORM_ID,
+  Input,
   OnDestroy,
+  OnInit,
+  PLATFORM_ID,
+  inject,
 } from '@angular/core';
-import { EDGE_CONFIG, EdgeConfigToken } from '../services/shared.token';
-import { JssStateService } from '../services/jss-state.service';
-import { isPlatformBrowser } from '@angular/common';
+import { debug, form } from '@sitecore-jss/sitecore-jss';
+import { ComponentRendering, LayoutServicePageState } from '@sitecore-jss/sitecore-jss/layout';
 import { Subscription } from 'rxjs';
+import { JssStateService } from '../services/jss-state.service';
+import { EDGE_CONFIG } from '../services/shared.token';
 
 let { executeScriptElements, loadForm, subscribeToFormSubmitEvent } = form;
 
@@ -73,12 +73,10 @@ export class FormComponent implements OnInit, OnDestroy {
 
   private contextSubscription: Subscription;
 
-  constructor(
-    @Inject(EDGE_CONFIG) private edgeConfig: EdgeConfigToken,
-    @Inject(PLATFORM_ID) private platformId: { [key: string]: unknown },
-    private elRef: ElementRef<HTMLElement>,
-    private jssState: JssStateService
-  ) {}
+  private readonly edgeConfig = inject(EDGE_CONFIG);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly elRef = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly jssState = inject(JssStateService);
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
