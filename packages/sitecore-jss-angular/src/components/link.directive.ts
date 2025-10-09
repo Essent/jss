@@ -7,12 +7,12 @@ import {
   SimpleChanges,
   TemplateRef,
   Type,
-  ViewContainerRef,
+  inject,
 } from '@angular/core';
-import { LinkField } from './rendering-field';
+import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
 import { BaseFieldDirective } from './base-field.directive';
 import { DefaultEmptyFieldEditingComponent } from './default-empty-text-field-editing-placeholder.component';
-import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
+import { LinkField } from './rendering-field';
 
 @Directive({ selector: '[scLink]' })
 export class LinkDirective extends BaseFieldDirective implements OnChanges {
@@ -30,19 +30,12 @@ export class LinkDirective extends BaseFieldDirective implements OnChanges {
   /**
    * Default component to render in Pages in Metadata edit mode if field value is empty and emptyFieldEditingTemplate is not provided
    */
-  protected defaultFieldEditingComponent: Type<unknown>;
+  protected defaultFieldEditingComponent: Type<unknown> = DefaultEmptyFieldEditingComponent;
+  protected readonly templateRef = inject<TemplateRef<unknown>>(TemplateRef);
+  protected readonly renderer = inject(Renderer2);
+  private readonly elementRef = inject(ElementRef);
 
   private inlineRef: HTMLSpanElement | null = null;
-
-  constructor(
-    viewContainer: ViewContainerRef,
-    protected templateRef: TemplateRef<unknown>,
-    protected renderer: Renderer2,
-    private elementRef: ElementRef
-  ) {
-    super(viewContainer);
-    this.defaultFieldEditingComponent = DefaultEmptyFieldEditingComponent;
-  }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.field || changes.editable || changes.attrs) {

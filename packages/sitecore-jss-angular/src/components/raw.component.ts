@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnInit, Renderer2 } from '@angular/core';
+import { Component, ElementRef, Input, OnInit, Renderer2, inject } from '@angular/core';
 import { HtmlElementRendering } from '@sitecore-jss/sitecore-jss/layout';
 
 @Component({
@@ -9,7 +9,8 @@ export class RawComponent implements OnInit {
   @Input() rendering: HtmlElementRendering;
   @Input() data: unknown;
 
-  constructor(private renderer: Renderer2, private elementRef: ElementRef) {}
+  private readonly renderer = inject(Renderer2);
+  private readonly elementRef = inject(ElementRef);
 
   ngOnInit() {
     const el = this.renderer.createElement(this.rendering.name);

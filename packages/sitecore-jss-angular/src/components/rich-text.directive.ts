@@ -2,18 +2,18 @@ import {
   Directive,
   Input,
   OnChanges,
+  Renderer2,
   SimpleChanges,
   TemplateRef,
-  ViewContainerRef,
-  Renderer2,
   Type,
+  inject,
 } from '@angular/core';
 import { Router } from '@angular/router';
+import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
 import { isAbsoluteUrl } from '@sitecore-jss/sitecore-jss/utils';
-import { RichTextField } from './rendering-field';
 import { BaseFieldDirective } from './base-field.directive';
 import { DefaultEmptyFieldEditingComponent } from './default-empty-text-field-editing-placeholder.component';
-import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
+import { RichTextField } from './rendering-field';
 
 @Directive({
   selector: '[scRichText]',
@@ -31,17 +31,11 @@ export class RichTextDirective extends BaseFieldDirective implements OnChanges {
   /**
    * Default component to render in Pages in Metadata edit mode if field value is empty and emptyFieldEditingTemplate is not provided
    */
-  protected defaultFieldEditingComponent: Type<unknown>;
+  protected defaultFieldEditingComponent: Type<unknown> = DefaultEmptyFieldEditingComponent;
 
-  constructor(
-    viewContainer: ViewContainerRef,
-    private templateRef: TemplateRef<unknown>,
-    private renderer: Renderer2,
-    private router: Router
-  ) {
-    super(viewContainer);
-    this.defaultFieldEditingComponent = DefaultEmptyFieldEditingComponent;
-  }
+  private readonly templateRef = inject<TemplateRef<unknown>>(TemplateRef);
+  private readonly renderer = inject(Renderer2);
+  private readonly router = inject(Router);
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.field || changes.editable) {

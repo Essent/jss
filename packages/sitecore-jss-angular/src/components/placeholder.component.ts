@@ -8,7 +8,6 @@ import {
   DoCheck,
   ElementRef,
   EventEmitter,
-  Inject,
   Input,
   KeyValueDiffer,
   KeyValueDiffers,
@@ -23,40 +22,39 @@ import {
   Type,
   ViewChild,
   ViewContainerRef,
+  inject,
 } from '@angular/core';
 import { Data, RedirectCommand, Router, UrlTree } from '@angular/router';
+import { constants } from '@sitecore-jss/sitecore-jss';
+import { DEFAULT_PLACEHOLDER_UID, MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
 import {
-  ComponentRendering,
-  HtmlElementRendering,
-  EditMode,
   ComponentFields,
+  ComponentRendering,
+  EditMode,
+  HtmlElementRendering,
+  getDynamicPlaceholderPattern,
+  isDynamicPlaceholder,
 } from '@sitecore-jss/sitecore-jss/layout';
-import { Observable, Subscription } from 'rxjs';
+import { Observable } from 'rxjs';
 import { takeWhile } from 'rxjs/operators';
 import { JssCanActivateRedirectError } from '../services/jss-can-activate-error';
 import {
   ComponentFactoryResult,
   JssComponentFactoryService,
 } from '../services/jss-component-factory.service';
+import { JssStateService } from '../services/jss-state.service';
 import {
-  DataResolver,
   DATA_RESOLVER,
-  GuardResolver,
+  DataResolver,
   GUARD_RESOLVER,
+  GuardResolver,
   PLACEHOLDER_HIDDEN_RENDERING_COMPONENT,
   PLACEHOLDER_MISSING_COMPONENT_COMPONENT,
 } from '../services/placeholder.token';
-import { constants } from '@sitecore-jss/sitecore-jss';
-import {
-  isDynamicPlaceholder,
-  getDynamicPlaceholderPattern,
-} from '@sitecore-jss/sitecore-jss/layout';
 import { PlaceholderLoadingDirective } from './placeholder-loading.directive';
 import { RenderEachDirective } from './render-each.directive';
 import { RenderEmptyDirective } from './render-empty.directive';
 import { isRawRendering } from './rendering';
-import { JssStateService } from '../services/jss-state.service';
-import { MetadataKind, DEFAULT_PLACEHOLDER_UID } from '@sitecore-jss/sitecore-jss/editing';
 
 export interface FactoryWithData {
   factory: ComponentFactoryResult;
@@ -122,33 +120,32 @@ export class PlaceholderComponent implements OnInit, OnChanges, DoCheck, OnDestr
   public isLoading = true;
   metadataMode: boolean;
   chromeType: string;
+  private readonly differs = inject(KeyValueDiffers);
+  private readonly componentFactory = inject(JssComponentFactoryService);
+  private readonly changeDetectorRef = inject(ChangeDetectorRef);
+  private readonly elementRef = inject(ElementRef);
+  private readonly renderer = inject(Renderer2);
+  private readonly router = inject(Router);
+  private readonly missingComponentComponent = inject<Type<unknown>>(
+    PLACEHOLDER_MISSING_COMPONENT_COMPONENT
+  );
+  private readonly hiddenRenderingComponent = inject<Type<unknown>>(
+    PLACEHOLDER_HIDDEN_RENDERING_COMPONENT
+  );
+  private readonly guardResolver = inject<GuardResolver>(GUARD_RESOLVER);
+  private readonly dataResolver = inject<DataResolver>(DATA_RESOLVER);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly jssState = inject(JssStateService);
+
   private _inputs: { [key: string]: unknown };
   private _differ: KeyValueDiffer<string, unknown>;
   private _componentRefs: ComponentRef<unknown>[] = [];
   private placeholderData?: (ComponentRendering<ComponentFields> | HtmlElementRendering)[];
   private destroyed = false;
   private parentStyleAttribute = '';
-  private contextSubscription: Subscription;
-
-  constructor(
-    private differs: KeyValueDiffers,
-    private componentFactory: JssComponentFactoryService,
-    private changeDetectorRef: ChangeDetectorRef,
-    private elementRef: ElementRef,
-    private renderer: Renderer2,
-    private router: Router,
-    @Inject(PLACEHOLDER_MISSING_COMPONENT_COMPONENT)
-    private missingComponentComponent: Type<unknown>,
-    @Inject(PLACEHOLDER_HIDDEN_RENDERING_COMPONENT) private hiddenRenderingComponent: Type<unknown>,
-    @Inject(GUARD_RESOLVER) private guardResolver: GuardResolver,
-    @Inject(DATA_RESOLVER) private dataResolver: DataResolver,
-    @Inject(PLATFORM_ID) private platformId: object,
-    private jssState: JssStateService
-  ) {
-    this.contextSubscription = this.jssState.state.subscribe(({ sitecore }) => {
-      this.metadataMode = sitecore?.context.editMode === EditMode.Metadata;
-    });
-  }
+  private contextSubscription = this.jssState.state.subscribe(({ sitecore }) => {
+    this.metadataMode = sitecore?.context.editMode === EditMode.Metadata;
+  });
 
   @Input()
   set inputs(value: { [key: string]: unknown }) {

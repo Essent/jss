@@ -1,6 +1,6 @@
 // tslint:disable: max-classes-per-file
 
-import { Injectable, Injector } from '@angular/core';
+import { Injectable, Injector, inject } from '@angular/core';
 import { TestBed, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute, RedirectCommand, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -56,7 +56,7 @@ class MockService {
 
 @Injectable()
 class MockInjectableGuard implements JssCanActivate {
-  constructor(private service: MockService) {}
+  private service = inject(MockService);
 
   canActivate() {
     return this.service.result;
@@ -65,7 +65,7 @@ class MockInjectableGuard implements JssCanActivate {
 
 @Injectable()
 class MockUrlTreeGuard implements JssCanActivate {
-  constructor(private readonly router: Router) {}
+  private readonly router = inject(Router);
 
   canActivate() {
     return this.router.parseUrl('/404');
@@ -74,7 +74,7 @@ class MockUrlTreeGuard implements JssCanActivate {
 
 @Injectable()
 class MockRedirectCommandGuard implements JssCanActivate {
-  constructor(private readonly router: Router) {}
+  private readonly router = inject(Router);
 
   canActivate() {
     return new RedirectCommand(this.router.parseUrl('/404'));

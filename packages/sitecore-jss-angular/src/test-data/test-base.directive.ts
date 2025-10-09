@@ -5,12 +5,12 @@ import {
   SimpleChanges,
   TemplateRef,
   Type,
-  ViewContainerRef,
+  inject,
 } from '@angular/core';
-import { TextField } from '../components/rendering-field';
+import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
 import { BaseFieldDirective } from '../components/base-field.directive';
 import { DefaultEmptyFieldEditingComponent } from '../components/default-empty-text-field-editing-placeholder.component';
-import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
+import { TextField } from '../components/rendering-field';
 
 @Directive({
   selector: '[scTestBase]',
@@ -19,12 +19,9 @@ export class TestBaseDirective extends BaseFieldDirective implements OnChanges {
   @Input('scTestBaseEditable') editable = true;
   @Input('scTestBase') field: TextField;
   @Input('scTestBaseEmptyFieldEditingTemplate') emptyFieldEditingTemplate: TemplateRef<unknown>;
-  protected defaultFieldEditingComponent: Type<unknown>;
+  protected defaultFieldEditingComponent: Type<unknown> = DefaultEmptyFieldEditingComponent;
 
-  constructor(viewContainer: ViewContainerRef, private templateRef: TemplateRef<unknown>) {
-    super(viewContainer);
-    this.defaultFieldEditingComponent = DefaultEmptyFieldEditingComponent;
-  }
+  private templateRef = inject<TemplateRef<unknown>>(TemplateRef);
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.field || changes.editable || changes.encode) {
