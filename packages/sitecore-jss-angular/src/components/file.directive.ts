@@ -7,6 +7,7 @@ import {
   TemplateRef,
   ViewContainerRef,
   input,
+  InputSignal,
 } from '@angular/core';
 import { FileField } from './rendering-field';
 
@@ -15,7 +16,9 @@ import { FileField } from './rendering-field';
  */
 @Directive({ selector: '[scFile]' })
 export class FileDirective implements OnChanges {
-  readonly field = input<FileField | undefined>(undefined, { alias: 'scFile' });
+  readonly field: InputSignal<FileField | undefined> = input<FileField | undefined>(undefined, {
+    alias: 'scFile',
+  });
 
   private viewRef?: EmbeddedViewRef<unknown>;
 

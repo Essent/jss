@@ -1,4 +1,4 @@
-import { Directive, TemplateRef, inject, input } from '@angular/core';
+import { Directive, InputSignal, TemplateRef, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { LinkDirective } from './link.directive';
 import { LinkField } from './rendering-field';
@@ -11,7 +11,9 @@ export class RouterLinkDirective extends LinkDirective {
     [attr: string]: string;
   }>({}, { alias: 'scRouterLinkAttrs' });
 
-  readonly field = input<LinkField | undefined>(undefined, { alias: 'scRouterLink' });
+  readonly field: InputSignal<LinkField | undefined> = input<LinkField | undefined>(undefined, {
+    alias: 'scRouterLink',
+  });
 
   /**
    * Custom template to render in Pages in Metadata edit mode if field value is empty

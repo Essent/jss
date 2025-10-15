@@ -1,6 +1,7 @@
 import {
   Directive,
   ElementRef,
+  InputSignal,
   OnChanges,
   Renderer2,
   SimpleChanges,
@@ -17,7 +18,9 @@ import { ImageField, ImageFieldValue } from './rendering-field';
 
 @Directive({ selector: '[scImage]' })
 export class ImageDirective extends BaseFieldDirective implements OnChanges {
-  readonly field = input<ImageField | undefined>(undefined, { alias: 'scImage' });
+  readonly field: InputSignal<ImageField | undefined> = input<ImageField | undefined>(undefined, {
+    alias: 'scImage',
+  });
 
   readonly editable = input(true, { alias: 'scImageEditable' });
 

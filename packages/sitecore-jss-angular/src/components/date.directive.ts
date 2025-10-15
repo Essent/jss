@@ -1,5 +1,13 @@
 import { DatePipe } from '@angular/common';
-import { Directive, inject, OnChanges, SimpleChanges, TemplateRef, input } from '@angular/core';
+import {
+  Directive,
+  inject,
+  OnChanges,
+  SimpleChanges,
+  TemplateRef,
+  input,
+  InputSignal,
+} from '@angular/core';
 import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
 import { BaseFieldDirective } from './base-field.directive';
 import { DefaultEmptyFieldEditingComponent } from './default-empty-text-field-editing-placeholder.component';
@@ -17,7 +25,9 @@ export class DateDirective extends BaseFieldDirective implements OnChanges {
 
   readonly editable = input(true, { alias: 'scDateEditable' });
 
-  readonly field = input<DateField | undefined>(undefined, { alias: 'scDate' });
+  readonly field: InputSignal<DateField | undefined> = input<DateField | undefined>(undefined, {
+    alias: 'scDate',
+  });
 
   /**
    * Custom template to render in Pages in Metadata edit mode if field value is empty

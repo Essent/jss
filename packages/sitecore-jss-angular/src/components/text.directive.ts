@@ -1,5 +1,6 @@
 import {
   Directive,
+  InputSignal,
   OnChanges,
   SimpleChanges,
   TemplateRef,
@@ -20,7 +21,9 @@ export class TextDirective extends BaseFieldDirective implements OnChanges {
 
   readonly encode = input(true, { alias: 'scTextEncode' });
 
-  readonly field = input<TextField | undefined>(undefined, { alias: 'scText' });
+  readonly field: InputSignal<TextField | undefined> = input<TextField | undefined>(undefined, {
+    alias: 'scText',
+  });
 
   /**
    * Custom template to render in Pages in Metadata edit mode if field value is empty

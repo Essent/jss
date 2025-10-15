@@ -1,6 +1,7 @@
 import {
   Directive,
   ElementRef,
+  InputSignal,
   OnChanges,
   Renderer2,
   SimpleChanges,
@@ -22,7 +23,9 @@ export class LinkDirective extends BaseFieldDirective implements OnChanges {
     [attr: string]: string;
   }>({}, { alias: 'scLinkAttrs' });
 
-  readonly field = input<LinkField | undefined>(undefined, { alias: 'scLink' });
+  readonly field: InputSignal<LinkField | undefined> = input<LinkField | undefined>(undefined, {
+    alias: 'scLink',
+  });
 
   /**
    * Custom template to render in Pages in Metadata edit mode if field value is empty

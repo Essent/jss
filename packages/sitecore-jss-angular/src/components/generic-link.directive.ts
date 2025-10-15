@@ -1,4 +1,4 @@
-import { Directive, TemplateRef, inject, input } from '@angular/core';
+import { Directive, InputSignal, TemplateRef, inject, input } from '@angular/core';
 import { NavigationExtras, Router } from '@angular/router';
 import { isAbsoluteUrl } from '@sitecore-jss/sitecore-jss/utils';
 import { LinkDirective } from './link.directive';
@@ -12,7 +12,9 @@ export class GenericLinkDirective extends LinkDirective {
     [key: string]: string;
   }>({}, { alias: 'scGenericLinkAttrs' });
 
-  readonly field = input<LinkField | undefined>(undefined, { alias: 'scGenericLink' });
+  readonly field: InputSignal<LinkField | undefined> = input<LinkField | undefined>(undefined, {
+    alias: 'scGenericLink',
+  });
 
   readonly extras = input<NavigationExtras>(undefined, { alias: 'scGenericLinkExtras' });
 

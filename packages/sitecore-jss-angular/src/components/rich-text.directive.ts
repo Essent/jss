@@ -1,5 +1,6 @@
 import {
   Directive,
+  InputSignal,
   OnChanges,
   Renderer2,
   SimpleChanges,
@@ -21,7 +22,10 @@ import { RichTextField } from './rendering-field';
 export class RichTextDirective extends BaseFieldDirective implements OnChanges {
   readonly editable = input(true, { alias: 'scRichTextEditable' });
 
-  readonly field = input<RichTextField | undefined>(undefined, { alias: 'scRichText' });
+  readonly field: InputSignal<RichTextField | undefined> = input<RichTextField | undefined>(
+    undefined,
+    { alias: 'scRichText' }
+  );
 
   /**
    * Custom template to render in Pages in Metadata edit mode if field value is empty
