@@ -1,5 +1,5 @@
 /* eslint-disable @angular-eslint/no-conflicting-lifecycle */
-import { isPlatformServer } from '@angular/common';
+import { isPlatformServer, NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectorRef,
   Component,
@@ -64,10 +64,9 @@ export interface FactoryWithData {
 @Component({
   selector: 'sc-placeholder,[sc-placeholder]',
   template: `
-    <ng-template
-      *ngIf="isLoading"
-      [ngTemplateOutlet]="placeholderLoading?.templateRef"
-    ></ng-template>
+    @if (isLoading) {
+    <ng-template [ngTemplateOutlet]="placeholderLoading?.templateRef"></ng-template>
+    }
     <ng-template
       #metadataCodeBlock
       let-kind="kind"
@@ -101,6 +100,7 @@ export interface FactoryWithData {
     >
     </ng-container>
   `,
+  imports: [NgTemplateOutlet],
 })
 export class PlaceholderComponent implements OnInit, OnChanges, DoCheck, OnDestroy {
   @Input() name?: string;

@@ -307,7 +307,9 @@ describe('<a *scGenericLink />', () => {
   selector: 'test-router-link-children',
   template: `
     <a *scGenericLink="field; editable: editable; attrs: attrs; extras: extras" id="my-link"
-      ><span *ngIf="true">hello world</span></a
+      >@if (true) {
+      <span>hello world</span>
+      }</a
     >
   `,
 })

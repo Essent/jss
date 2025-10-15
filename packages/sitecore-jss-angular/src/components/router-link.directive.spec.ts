@@ -305,9 +305,11 @@ describe('<a *scRouterLink />', () => {
   selector: 'test-router-link-children',
   template: `
     <a *scRouterLink="field; editable: editable; attrs: attrs" id="my-link"
-      ><span *ngIf="true">hello world</span></a
-    >
-  `,
+      >@if (true) {
+      <span>hello world</span>
+      }</a
+      >
+    `,
 })
 class TestWithChildrenComponent {
   @Input() field: LinkField;

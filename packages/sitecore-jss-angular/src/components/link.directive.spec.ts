@@ -463,7 +463,9 @@ describe('<a *scLink />', () => {
   selector: 'test-link-children',
   template: `
     <a *scLink="field; editable: editable; attrs: attrs" id="my-link"
-      ><span *ngIf="true">hello world</span></a
+      >@if (true) {
+      <span>hello world</span>
+      }</a
     >
   `,
 })
