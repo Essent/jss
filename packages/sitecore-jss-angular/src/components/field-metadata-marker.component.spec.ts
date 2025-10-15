@@ -1,4 +1,4 @@
-import { Component, DebugElement, Input } from '@angular/core';
+import { Component, DebugElement, input } from '@angular/core';
 import { FieldMetadataMarkerComponent } from './field-metadata-marker.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -7,12 +7,12 @@ import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
 @Component({
   selector: 'test-marker',
   template: `
-    <code scFieldMetadataMarker [metadata]="metadata" [kind]="kind"></code>
+    <code scFieldMetadataMarker [metadata]="metadata()" [kind]="kind()"></code>
   `,
 })
 class TestComponent {
-  @Input() metadata: any;
-  @Input() kind: MetadataKind = MetadataKind.Open;
+  readonly metadata = input<any>(undefined);
+  readonly kind = input<MetadataKind>(MetadataKind.Open);
 }
 
 describe('<code scFieldMetadataMarker />', () => {
@@ -60,6 +60,6 @@ describe('<code scFieldMetadataMarker />', () => {
     fixture.detectChanges();
 
     const rendered = de.query(By.css('code')).nativeElement as HTMLElement;
-    expect(rendered.textContent).toBe(JSON.stringify(comp.metadata));
+    expect(rendered.textContent).toBe(JSON.stringify(comp.metadata()));
   });
 });

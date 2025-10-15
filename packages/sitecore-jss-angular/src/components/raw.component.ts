@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnInit, Renderer2, inject } from '@angular/core';
+import { Component, ElementRef, OnInit, Renderer2, inject, input } from '@angular/core';
 import { HtmlElementRendering } from '@sitecore-jss/sitecore-jss/layout';
 
 @Component({
@@ -6,16 +6,16 @@ import { HtmlElementRendering } from '@sitecore-jss/sitecore-jss/layout';
   template: '',
 })
 export class RawComponent implements OnInit {
-  @Input() rendering: HtmlElementRendering;
-  @Input() data: unknown;
+  readonly rendering = input.required<HtmlElementRendering>();
+  readonly data = input<unknown>();
 
   private readonly renderer = inject(Renderer2);
   private readonly elementRef = inject(ElementRef);
 
   ngOnInit() {
-    const el = this.renderer.createElement(this.rendering.name);
-    const contents = this.renderer.createText(this.rendering.contents || '');
-    const attributes = this.rendering.attributes;
+    const el = this.renderer.createElement(this.rendering().name);
+    const contents = this.renderer.createText(this.rendering().contents || '');
+    const attributes = this.rendering().attributes;
     for (const attr in attributes) {
       // eslint-disable-next-line no-prototype-builtins
       if (attributes.hasOwnProperty(attr)) {

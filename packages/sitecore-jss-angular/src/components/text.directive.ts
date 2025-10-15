@@ -1,11 +1,11 @@
 import {
   Directive,
-  Input,
   OnChanges,
   SimpleChanges,
   TemplateRef,
   Type,
   inject,
+  input,
 } from '@angular/core';
 import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
 import { BaseFieldDirective } from './base-field.directive';
@@ -16,16 +16,18 @@ import { TextField } from './rendering-field';
   selector: '[scText]',
 })
 export class TextDirective extends BaseFieldDirective implements OnChanges {
-  @Input('scTextEditable') editable = true;
+  readonly editable = input(true, { alias: 'scTextEditable' });
 
-  @Input('scTextEncode') encode = true;
+  readonly encode = input(true, { alias: 'scTextEncode' });
 
-  @Input('scText') field: TextField;
+  readonly field = input<TextField | undefined>(undefined, { alias: 'scText' });
 
   /**
    * Custom template to render in Pages in Metadata edit mode if field value is empty
    */
-  @Input('scTextEmptyFieldEditingTemplate') emptyFieldEditingTemplate: TemplateRef<unknown>;
+  readonly emptyFieldEditingTemplate = input<TemplateRef<unknown>>(undefined, {
+    alias: 'scTextEmptyFieldEditingTemplate',
+  });
 
   /**
    * Default component to render in Pages in Metadata edit mode if field value is empty and emptyFieldEditingTemplate is not provided
@@ -43,7 +45,8 @@ export class TextDirective extends BaseFieldDirective implements OnChanges {
   }
 
   private updateView() {
-    if (!this.shouldRender()) {
+    const field = this.field();
+    if (!field || !this.shouldRender()) {
       super.renderEmpty();
       return;
     }
@@ -52,16 +55,16 @@ export class TextDirective extends BaseFieldDirective implements OnChanges {
     this.viewRef = this.viewContainer.createEmbeddedView(this.templateRef);
     this.renderMetadata(MetadataKind.Close);
 
-    const field = this.field;
-    let editable = this.editable;
+    let editable = this.editable();
 
     // can't use editable value if we want to output unencoded
-    if (!this.encode) {
+    const encode = this.encode();
+    if (!encode) {
       editable = false;
     }
 
     const html = field.editable && editable ? field.editable : field.value;
-    const setDangerously = (field.editable && editable) || !this.encode;
+    const setDangerously = (field.editable && editable) || !encode;
 
     this.viewRef.rootNodes.forEach((node) => {
       if (setDangerously) {

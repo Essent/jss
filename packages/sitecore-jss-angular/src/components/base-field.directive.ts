@@ -5,6 +5,7 @@ import {
   EmbeddedViewRef,
   TemplateRef,
   inject,
+  InputSignal,
 } from '@angular/core';
 import { RenderingField } from './rendering-field';
 import { GenericFieldValue, isFieldValueEmpty } from '@sitecore-jss/sitecore-jss/layout';
@@ -19,12 +20,12 @@ export abstract class BaseFieldDirective {
   protected viewRef?: EmbeddedViewRef<unknown>;
   protected readonly viewContainer: ViewContainerRef = inject(ViewContainerRef);
 
-  protected abstract field: RenderingField<GenericFieldValue>;
-  protected abstract editable: boolean;
+  protected abstract field: InputSignal<RenderingField<any> | undefined>;
+  protected abstract editable: InputSignal<boolean>;
   /**
    * Custom template to render in Pages in Metadata edit mode if field value is empty
    */
-  protected abstract emptyFieldEditingTemplate: TemplateRef<unknown>;
+  protected abstract emptyFieldEditingTemplate: InputSignal<TemplateRef<unknown> | undefined>;
   /**
    * Default component to render in Pages in Metadata edit mode if field value is empty and emptyFieldEditingTemplate is not provided
    */
@@ -35,17 +36,19 @@ export abstract class BaseFieldDirective {
    * Returns true if we are in edit mode 'chromes' (field.editable is present) or field is not empty
    */
   protected shouldRender() {
-    return !!this.field?.editable || !isFieldValueEmpty(this.field);
+    const field = this.field();
+    return !field || !!field?.editable || !isFieldValueEmpty(field);
   }
 
   /**
    * Renders the empty field markup which is required by Pages in editMode 'metadata' in case field is empty.
    */
   protected renderEmpty() {
-    if (this.field?.metadata && this.editable) {
+    if (this.field()?.metadata && this.editable()) {
       this.renderMetadata(MetadataKind.Open);
-      if (this.emptyFieldEditingTemplate) {
-        this.viewContainer.createEmbeddedView(this.emptyFieldEditingTemplate);
+      const template = this.emptyFieldEditingTemplate();
+      if (template) {
+        this.viewContainer.createEmbeddedView(template);
       } else {
         this.viewContainer.createComponent(this.defaultFieldEditingComponent);
       }
@@ -58,11 +61,12 @@ export abstract class BaseFieldDirective {
    * @param {string} kind - 'open' or 'close' to indicate the start or end of the metadata chrome
    */
   protected renderMetadata(kind: MetadataKind) {
-    if (this.field?.metadata && this.editable) {
+    const field = this.field();
+    if (field?.metadata && this.editable()) {
       const metadataChrome = this.viewContainer.createComponent(FieldMetadataMarkerComponent);
       metadataChrome.setInput('kind', kind);
       if (kind === MetadataKind.Open) {
-        metadataChrome.setInput('metadata', this.field.metadata);
+        metadataChrome.setInput('metadata', field.metadata);
       }
     }
   }

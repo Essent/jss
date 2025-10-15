@@ -3,11 +3,11 @@ import { isPlatformBrowser } from '@angular/common';
 import {
   Component,
   ElementRef,
-  Input,
   OnDestroy,
   OnInit,
   PLATFORM_ID,
   inject,
+  input,
 } from '@angular/core';
 import { debug, form } from '@sitecore-jss/sitecore-jss';
 import { ComponentRendering, LayoutServicePageState } from '@sitecore-jss/sitecore-jss/layout';
@@ -45,11 +45,11 @@ export type FormRendering = {
 @Component({
   selector: 'app-form',
   template: `
-    @if (isEditing) { @if (!rendering.params.FormId) {
+    @if (isEditing) { @if (!rendering().params.FormId) {
     <div
       style="background: darkorange; outline: 5px solid orange; padding: 10px; color: white; max-width: 500px;"
     >
-      <h2>{{ rendering.componentName }}</h2>
+      <h2>{{ rendering().componentName }}</h2>
       <p>JSS component is missing FormId rendering parameter.</p>
     </div>
     } @if (hasError) {
@@ -61,8 +61,8 @@ export class FormComponent implements OnInit, OnDestroy {
   /**
    * The rendering data for the component
    */
-  @Input() rendering: FormRendering;
-  @Input() data: unknown;
+  readonly rendering = input.required<FormRendering>();
+  readonly data = input<unknown>();
 
   hasError = false;
 
@@ -100,19 +100,21 @@ export class FormComponent implements OnInit, OnDestroy {
     try {
       const content = await loadForm(
         sitecoreEdgeContextId,
-        this.rendering.params.FormId,
+        this.rendering().params.FormId,
         sitecoreEdgeUrl
       );
 
       this.elRef.nativeElement.innerHTML = content;
-      this.elRef.nativeElement.className = this.rendering.params?.styles?.trimEnd() || '';
-      this.elRef.nativeElement.id = this.rendering.params?.RenderingIdentifier || '';
+      this.elRef.nativeElement.className = this.rendering().params?.styles?.trimEnd() || '';
+      this.elRef.nativeElement.id = this.rendering().params?.RenderingIdentifier || '';
 
       const form = this.elRef.nativeElement.querySelector('form');
 
       if (!form) {
         debug.form(
-          `Form '${this.rendering.params.FormId}' was not able to render since form element was not found`
+          `Form '${
+            this.rendering().params.FormId
+          }' was not able to render since form element was not found`
         );
         return;
       }
@@ -120,7 +122,7 @@ export class FormComponent implements OnInit, OnDestroy {
       executeScriptElements(this.elRef.nativeElement);
 
       if (!this.isEditing) {
-        subscribeToFormSubmitEvent(form, this.rendering.uid);
+        subscribeToFormSubmitEvent(form, this.rendering().uid);
       }
     } catch {
       this.hasError = true;

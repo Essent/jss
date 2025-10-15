@@ -1,13 +1,13 @@
 import {
   Directive,
   ElementRef,
-  Input,
   OnChanges,
   Renderer2,
   SimpleChanges,
   TemplateRef,
   Type,
   inject,
+  input,
 } from '@angular/core';
 import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
 import { BaseFieldDirective } from './base-field.directive';
@@ -16,16 +16,20 @@ import { LinkField } from './rendering-field';
 
 @Directive({ selector: '[scLink]' })
 export class LinkDirective extends BaseFieldDirective implements OnChanges {
-  @Input('scLinkEditable') editable = true;
+  readonly editable = input(true, { alias: 'scLinkEditable' });
 
-  @Input('scLinkAttrs') attrs: { [attr: string]: string } = {};
+  readonly attrs = input<{
+    [attr: string]: string;
+  }>({}, { alias: 'scLinkAttrs' });
 
-  @Input('scLink') field: LinkField;
+  readonly field = input<LinkField | undefined>(undefined, { alias: 'scLink' });
 
   /**
    * Custom template to render in Pages in Metadata edit mode if field value is empty
    */
-  @Input('scLinkEmptyFieldEditingTemplate') emptyFieldEditingTemplate: TemplateRef<unknown>;
+  readonly emptyFieldEditingTemplate = input<TemplateRef<unknown>>(undefined, {
+    alias: 'scLinkEmptyFieldEditingTemplate',
+  });
 
   /**
    * Default component to render in Pages in Metadata edit mode if field value is empty and emptyFieldEditingTemplate is not provided
@@ -93,18 +97,17 @@ export class LinkDirective extends BaseFieldDirective implements OnChanges {
    * The right side of the expression was added to preserve existing functionality
    */
   protected shouldRender() {
-    return (
-      super.shouldRender() ||
-      !!((this.field?.text || this.field?.value?.text) && !this.field?.metadata)
-    );
+    const field = this.field();
+    return super.shouldRender() || !!((field?.text || field?.value?.text) && !field?.metadata);
   }
 
   private updateView() {
-    const field = this.field;
-    if (this.editable && field && field.editableFirstPart && field.editableLastPart) {
+    const field = this.field();
+
+    if (this.editable() && field && field.editableFirstPart && field.editableLastPart) {
       this.renderInlineWrapper(field.editableFirstPart, field.editableLastPart);
     } else {
-      if (!this.shouldRender()) {
+      if (!field || !this.shouldRender()) {
         super.renderEmpty();
         return;
       }
@@ -115,7 +118,7 @@ export class LinkDirective extends BaseFieldDirective implements OnChanges {
       const anchor = props?.anchor ? `#${props.anchor}` : '';
       const href = `${props?.href}${anchor}`;
 
-      const mergedAttrs = { ...props, ...this.attrs, href };
+      const mergedAttrs = { ...props, ...this.attrs(), href };
 
       delete mergedAttrs.anchor;
       this.renderMetadata(MetadataKind.Open);
@@ -132,7 +135,7 @@ export class LinkDirective extends BaseFieldDirective implements OnChanges {
     // assign attributes from template to inline wrapper
     const attrs = {
       ...this.getElementAttrs(),
-      ...this.attrs,
+      ...this.attrs(),
     };
     Object.entries(attrs).forEach(([key, attrValue]) => this.updateAttribute(span, key, attrValue));
 

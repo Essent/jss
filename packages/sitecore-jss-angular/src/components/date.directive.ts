@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Directive, inject, Input, OnChanges, SimpleChanges, TemplateRef } from '@angular/core';
+import { Directive, inject, OnChanges, SimpleChanges, TemplateRef, input } from '@angular/core';
 import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
 import { BaseFieldDirective } from './base-field.directive';
 import { DefaultEmptyFieldEditingComponent } from './default-empty-text-field-editing-placeholder.component';
@@ -9,20 +9,22 @@ import { DateField } from './rendering-field';
   selector: '[scDate]',
 })
 export class DateDirective extends BaseFieldDirective implements OnChanges {
-  @Input('scDateFormat') format?: string;
+  readonly format = input<string>(undefined, { alias: 'scDateFormat' });
 
-  @Input('scDateTimezone') timezone?: string;
+  readonly timezone = input<string>(undefined, { alias: 'scDateTimezone' });
 
-  @Input('scDateLocale') locale?: string;
+  readonly locale = input<string>(undefined, { alias: 'scDateLocale' });
 
-  @Input('scDateEditable') editable = true;
+  readonly editable = input(true, { alias: 'scDateEditable' });
 
-  @Input('scDate') field: DateField;
+  readonly field = input<DateField | undefined>(undefined, { alias: 'scDate' });
 
   /**
    * Custom template to render in Pages in Metadata edit mode if field value is empty
    */
-  @Input('scDateEmptyFieldEditingTemplate') emptyFieldEditingTemplate: TemplateRef<unknown>;
+  readonly emptyFieldEditingTemplate = input<TemplateRef<unknown>>(undefined, {
+    alias: 'scDateEmptyFieldEditingTemplate',
+  });
 
   /**
    * Default component to render in Pages in Metadata edit mode if field value is empty and emptyFieldEditingTemplate is not provided
@@ -44,7 +46,8 @@ export class DateDirective extends BaseFieldDirective implements OnChanges {
   }
 
   private updateView() {
-    if (!this.shouldRender()) {
+    const field = this.field();
+    if (!field || !this.shouldRender()) {
       super.renderEmpty();
       return;
     }
@@ -53,15 +56,18 @@ export class DateDirective extends BaseFieldDirective implements OnChanges {
     this.viewRef = this.viewContainer.createEmbeddedView(this.templateRef);
     this.renderMetadata(MetadataKind.Close);
 
-    const field = this.field;
-
-    const html = field.editable && this.editable ? field.editable : field.value;
-    const setDangerously = field.editable && this.editable;
+    const html = field.editable && this.editable() ? field.editable : field.value;
+    const setDangerously = field.editable && this.editable();
     this.viewRef.rootNodes.forEach((node) => {
       if (setDangerously) {
         node.innerHTML = html;
       } else {
-        node.textContent = this.datePipe.transform(html, this.format, this.timezone, this.locale);
+        node.textContent = this.datePipe.transform(
+          html,
+          this.format(),
+          this.timezone(),
+          this.locale()
+        );
       }
     });
   }

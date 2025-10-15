@@ -1,4 +1,4 @@
-import { Directive, Input, TemplateRef, inject } from '@angular/core';
+import { Directive, TemplateRef, inject, input } from '@angular/core';
 import { NavigationExtras, Router } from '@angular/router';
 import { isAbsoluteUrl } from '@sitecore-jss/sitecore-jss/utils';
 import { LinkDirective } from './link.directive';
@@ -6,20 +6,22 @@ import { LinkField } from './rendering-field';
 
 @Directive({ selector: '[scGenericLink]' })
 export class GenericLinkDirective extends LinkDirective {
-  @Input('scGenericLinkEditable') editable = true;
+  readonly editable = input(true, { alias: 'scGenericLinkEditable' });
 
-  @Input('scGenericLinkAttrs') attrs: { [key: string]: string } = {};
+  readonly attrs = input<{
+    [key: string]: string;
+  }>({}, { alias: 'scGenericLinkAttrs' });
 
-  @Input('scGenericLink') declare field: LinkField;
+  readonly field = input<LinkField | undefined>(undefined, { alias: 'scGenericLink' });
 
-  @Input('scGenericLinkExtras') extras?: NavigationExtras;
+  readonly extras = input<NavigationExtras>(undefined, { alias: 'scGenericLinkExtras' });
 
   /**
    * Custom template to render in Pages in Metadata edit mode if field value is empty
    */
-  @Input('scGenericLinkEmptyFieldEditingTemplate') declare emptyFieldEditingTemplate: TemplateRef<
-    unknown
-  >;
+  readonly emptyFieldEditingTemplate = input<TemplateRef<unknown>>(undefined, {
+    alias: 'scGenericLinkEmptyFieldEditingTemplate',
+  });
 
   private readonly router = inject(Router);
 
@@ -34,13 +36,13 @@ export class GenericLinkDirective extends LinkDirective {
           const anchor = fragments[1];
           const urlTree = this.router.createUrlTree([url], {
             fragment: anchor,
-            ...this.extras,
+            ...this.extras(),
           });
           this.updateAttribute(node, key, this.router.serializeUrl(urlTree));
           this.renderer.listen(node, 'click', (event) => {
             this.router.navigate([url], {
               fragment: anchor,
-              ...this.extras,
+              ...this.extras(),
             });
 
             // shouldn't prevent default if the link includes a fragment

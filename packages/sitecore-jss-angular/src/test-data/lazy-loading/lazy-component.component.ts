@@ -1,4 +1,4 @@
-import { Component, inject, Input } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { ComponentRendering } from '@sitecore-jss/sitecore-jss/layout';
 import { MockService } from './mock.service';
 
@@ -8,13 +8,13 @@ import { MockService } from './mock.service';
 @Component({
   selector: 'lazy-component',
   template: `
-    {{ rendering?.fields?.linkText?.value }}
+    {{ rendering()?.fields?.linkText?.value }}
     {{ getText() }}
   `,
 })
 export class LazyComponent {
-  @Input() rendering: ComponentRendering;
-  @Input() data: unknown;
+  readonly rendering = input<ComponentRendering<any>>();
+  readonly data = input<unknown>();
 
   private mockService: MockService = inject(MockService);
 

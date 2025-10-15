@@ -1,4 +1,4 @@
-import { Component, DebugElement, Input, TemplateRef } from '@angular/core';
+import { Component, DebugElement, TemplateRef, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
@@ -11,16 +11,16 @@ import { LinkField } from './rendering-field';
   selector: 'test-router-link',
   template: `
     <a
-      *scRouterLink="field; editable: editable; attrs: attrs"
+      *scRouterLink="field(); editable: editable(); attrs: attrs()"
       class="external-css-class"
       id="my-link"
     ></a>
   `,
 })
 class TestComponent {
-  @Input() field: LinkField;
-  @Input() editable = true;
-  @Input() attrs = {};
+  readonly field = input<LinkField>(undefined);
+  readonly editable = input(true);
+  readonly attrs = input({});
 }
 
 const emptyLinkFieldEditingTemplateId = 'emptyLinkFieldEditingTemplate';
@@ -47,10 +47,10 @@ const emptyLinkFieldEditingTemplateDefaultTestString =
   `,
 })
 class TestEmptyTemplateComponent {
-  @Input() field: LinkField;
-  @Input() editable = true;
-  @Input() attrs = {};
-  @Input() emptyFieldEditingTemplate: TemplateRef<unknown>;
+  readonly field = input<LinkField>();
+  readonly editable = input(true);
+  readonly attrs = input({});
+  readonly emptyFieldEditingTemplate = input<TemplateRef<unknown>>();
 }
 
 describe('<a *scRouterLink />', () => {
@@ -304,7 +304,7 @@ describe('<a *scRouterLink />', () => {
 @Component({
   selector: 'test-router-link-children',
   template: `
-    <a *scRouterLink="field; editable: editable; attrs: attrs" id="my-link"
+    <a *scRouterLink="field(); editable: editable(); attrs: attrs()" id="my-link"
       >@if (true) {
       <span>hello world</span>
       }</a
@@ -312,9 +312,9 @@ describe('<a *scRouterLink />', () => {
     `,
 })
 class TestWithChildrenComponent {
-  @Input() field: LinkField;
-  @Input() editable = true;
-  @Input() attrs = {};
+  readonly field = input<LinkField>();
+  readonly editable = input(true);
+  readonly attrs = input({});
 }
 
 @Component({
@@ -336,10 +336,10 @@ class TestWithChildrenComponent {
   `,
 })
 class TestEmptyTemplateWithChildrenComponent {
-  @Input() field: LinkField;
-  @Input() editable = true;
-  @Input() attrs = {};
-  @Input() emptyFieldEditingTemplate: TemplateRef<unknown>;
+  readonly field = input<LinkField>();
+  readonly editable = input(true);
+  readonly attrs = input({});
+  readonly emptyFieldEditingTemplate = input<TemplateRef<unknown>>();
 }
 
 describe('<a *scRouterLink>children</a>', () => {

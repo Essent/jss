@@ -2,11 +2,11 @@ import {
   Directive,
   EmbeddedViewRef,
   inject,
-  Input,
   OnChanges,
   SimpleChanges,
   TemplateRef,
   ViewContainerRef,
+  input,
 } from '@angular/core';
 import { FileField } from './rendering-field';
 
@@ -15,7 +15,7 @@ import { FileField } from './rendering-field';
  */
 @Directive({ selector: '[scFile]' })
 export class FileDirective implements OnChanges {
-  @Input('scFile') field: FileField;
+  readonly field = input<FileField | undefined>(undefined, { alias: 'scFile' });
 
   private viewRef?: EmbeddedViewRef<unknown>;
 
@@ -34,7 +34,7 @@ export class FileDirective implements OnChanges {
   }
 
   private updateView() {
-    const field = this.field;
+    const field = this.field();
 
     if (!field || (!field.value && !field.src)) {
       return;
