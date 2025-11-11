@@ -327,10 +327,7 @@ export class PlaceholderComponent implements OnInit, OnChanges, DoCheck, OnDestr
 
     const placeholder = this.placeholderData;
     if (!placeholder) {
-      console.warn(
-        `Placeholder '${name}' was not found in the current rendering data`,
-        JSON.stringify(renderingValue, null, 2)
-      );
+      console.warn(`Placeholder '${name}' was not found in the current rendering data`);
       this.isLoading = false;
       return;
     }
@@ -394,7 +391,6 @@ export class PlaceholderComponent implements OnInit, OnChanges, DoCheck, OnDestr
           this.failed.emit(e as Error);
           console.warn(
             `Placeholder '${name}' was not able to render with the current rendering data and error`,
-            JSON.stringify(renderingValue, null, 2),
             e
           );
           return;
