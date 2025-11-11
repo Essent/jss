@@ -450,7 +450,7 @@ export class PlaceholderComponent implements OnInit, OnChanges, DoCheck, OnDestr
 
     const componentInstance = createdComponentRef.instance;
     createdComponentRef.setInput('rendering', rendering.componentDefinition);
-    if (data) {
+    if (Object.keys(data).length > 0) {
       createdComponentRef.setInput('data', data);
     }
     if (this._inputs) {
