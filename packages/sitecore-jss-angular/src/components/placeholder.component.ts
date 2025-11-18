@@ -282,9 +282,11 @@ export class PlaceholderComponent implements OnInit, OnChanges, DoCheck, OnDestr
     componentRef: ComponentRef<unknown>,
     inputs: { [key: string]: unknown }
   ) {
-    Object.entries(inputs).forEach(([input, inputValue]) =>
-      componentRef.setInput(input, inputValue)
-    );
+    Object.entries(inputs).forEach(([input, inputValue]) => {
+      if (Object.prototype.hasOwnProperty.call(componentRef.instance, input)) {
+        componentRef.setInput(input, inputValue);
+      }
+    });
   }
 
   private _subscribeComponentOutputs(
