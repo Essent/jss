@@ -110,7 +110,7 @@ export class LinkDirective extends BaseFieldDirective implements OnChanges {
     if (this.editable() && field && field.editableFirstPart && field.editableLastPart) {
       this.renderInlineWrapper(field.editableFirstPart, field.editableLastPart);
     } else {
-      if (!field || !this.shouldRender()) {
+      if (!this.shouldRender()) {
         super.renderEmpty();
         return;
       }

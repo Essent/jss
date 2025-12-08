@@ -37,7 +37,7 @@ export abstract class BaseFieldDirective {
    */
   protected shouldRender() {
     const field = this.field();
-    return !field || !!field?.editable || !isFieldValueEmpty(field);
+    return !!field?.editable || !isFieldValueEmpty(field);
   }
 
   /**

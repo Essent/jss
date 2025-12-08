@@ -51,12 +51,12 @@ export class RichTextDirective extends BaseFieldDirective implements OnChanges {
   }
 
   private updateView() {
-    const field = this.field();
-    if (!field || !this.shouldRender()) {
+    if (!this.shouldRender()) {
       super.renderEmpty();
       return;
     }
 
+    const field = this.field();
     this.renderMetadata(MetadataKind.Open);
     this.viewRef = this.viewContainer.createEmbeddedView(this.templateRef);
     this.renderMetadata(MetadataKind.Close);
