@@ -1,25 +1,28 @@
 import {
   Directive,
   ElementRef,
-  Input,
+  InputSignal,
   OnChanges,
   Renderer2,
   SimpleChanges,
   TemplateRef,
   Type,
-  ViewContainerRef,
+  inject,
+  input,
 } from '@angular/core';
+import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
 import { mediaApi } from '@sitecore-jss/sitecore-jss/media';
-import { ImageField, ImageFieldValue } from './rendering-field';
 import { BaseFieldDirective } from './base-field.directive';
 import { DefaultEmptyImageFieldEditingComponent } from './default-empty-image-field-editing-placeholder.component';
-import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
+import { ImageField, ImageFieldValue } from './rendering-field';
 
 @Directive({ selector: '[scImage]' })
 export class ImageDirective extends BaseFieldDirective implements OnChanges {
-  @Input('scImage') field: ImageField;
+  readonly field: InputSignal<ImageField | undefined> = input<ImageField | undefined>(undefined, {
+    alias: 'scImage',
+  });
 
-  @Input('scImageEditable') editable = true;
+  readonly editable = input(true, { alias: 'scImageEditable' });
 
   /**
    * Custom regexp that finds media URL prefix that will be replaced by `/-/jssmedia` or `/~/jssmedia`.
@@ -28,33 +31,32 @@ export class ImageDirective extends BaseFieldDirective implements OnChanges {
    * /-assets/website -> /-/jssmedia/website
    * /~assets/website -> /~/jssmedia/website
    */
-  @Input('scImageMediaUrlPrefix') mediaUrlPrefix?: RegExp;
+  readonly mediaUrlPrefix = input<RegExp>(undefined, { alias: 'scImageMediaUrlPrefix' });
 
-  @Input('scImageUrlParams') urlParams: { [param: string]: string | number } = {};
+  readonly urlParams = input<{
+    [param: string]: string | number;
+  }>({}, { alias: 'scImageUrlParams' });
 
-  @Input('scImageAttrs') attrs: { [param: string]: unknown } = {};
+  readonly attrs = input<{
+    [param: string]: unknown;
+  }>({}, { alias: 'scImageAttrs' });
 
   /**
    * Custom template to render in Pages in Metadata edit mode if field value is empty
    */
-  @Input('scImageEmptyFieldEditingTemplate') emptyFieldEditingTemplate: TemplateRef<unknown>;
+  readonly emptyFieldEditingTemplate = input<TemplateRef<unknown>>(undefined, {
+    alias: 'scImageEmptyFieldEditingTemplate',
+  });
 
   /**
    * Default component to render in Pages in Metadata edit mode if field value is empty and emptyFieldEditingTemplate is not provided
    */
-  protected defaultFieldEditingComponent: Type<unknown>;
+  protected defaultFieldEditingComponent: Type<unknown> = DefaultEmptyImageFieldEditingComponent;
+  private templateRef = inject<TemplateRef<unknown>>(TemplateRef);
+  private renderer = inject(Renderer2);
+  private elementRef = inject(ElementRef);
 
   private inlineRef: HTMLSpanElement | null = null;
-
-  constructor(
-    viewContainer: ViewContainerRef,
-    private templateRef: TemplateRef<unknown>,
-    private renderer: Renderer2,
-    private elementRef: ElementRef
-  ) {
-    super(viewContainer);
-    this.defaultFieldEditingComponent = DefaultEmptyImageFieldEditingComponent;
-  }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.field || changes.editable || changes.urlParams || changes.attrs) {
@@ -69,26 +71,26 @@ export class ImageDirective extends BaseFieldDirective implements OnChanges {
   }
 
   private updateView() {
-    if (!this.shouldRender()) {
+    const media = this.field();
+    if (!media || !this.shouldRender()) {
       super.renderEmpty();
       return;
     }
 
     const overrideAttrs = {
       ...this.getElementAttrs(),
-      ...this.attrs,
+      ...this.attrs(),
     };
-    const media = this.field;
 
     let attrs: { [attr: string]: string } | null = {};
 
     // we likely have an experience editor value, should be a string
-    if (this.editable && media.editable) {
+    if (this.editable() && media.editable) {
       const foundImg = mediaApi.findEditorImageTag(media.editable);
       if (!foundImg) {
         return this.renderInlineWrapper(media.editable);
       }
-      attrs = this.getImageAttrs(foundImg.attrs, overrideAttrs, this.urlParams);
+      attrs = this.getImageAttrs(foundImg.attrs, overrideAttrs, this.urlParams());
       if (!attrs) {
         return this.renderInlineWrapper(media.editable);
       }
@@ -106,7 +108,7 @@ export class ImageDirective extends BaseFieldDirective implements OnChanges {
       return null;
     }
 
-    attrs = this.getImageAttrs(img, overrideAttrs, this.urlParams);
+    attrs = this.getImageAttrs(img, overrideAttrs, this.urlParams());
     if (attrs) {
       this.renderMetadata(MetadataKind.Open);
       this.renderTemplate(attrs);
@@ -132,10 +134,10 @@ export class ImageDirective extends BaseFieldDirective implements OnChanges {
       ...(otherAttrs as { [key: string]: string }),
     };
     // update image URL for jss handler and image rendering params
-    src = mediaApi.updateImageUrl(src, imageParams, this.mediaUrlPrefix);
+    src = mediaApi.updateImageUrl(src, imageParams, this.mediaUrlPrefix());
     if (srcSet) {
       // replace with HTML-formatted srcset, including updated image URLs
-      newAttrs.srcSet = mediaApi.getSrcSet(src, srcSet, imageParams, this.mediaUrlPrefix);
+      newAttrs.srcSet = mediaApi.getSrcSet(src, srcSet, imageParams, this.mediaUrlPrefix());
     } else {
       newAttrs.src = src;
     }

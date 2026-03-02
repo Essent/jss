@@ -1,5 +1,7 @@
-import { createNgModule, Inject, Injectable, Injector, NgModuleRef, Type } from '@angular/core';
+import { createNgModule, inject, Injectable, Injector, NgModuleRef, Type } from '@angular/core';
 import { ComponentRendering, HtmlElementRendering } from '@sitecore-jss/sitecore-jss/layout';
+import { RawComponent } from '../components/raw.component';
+import { isRawRendering } from '../components/rendering';
 import {
   ComponentNameAndModule,
   ComponentNameAndType,
@@ -10,8 +12,6 @@ import {
   PLACEHOLDER_COMPONENTS,
   PLACEHOLDER_LAZY_COMPONENTS,
 } from './placeholder.token';
-import { RawComponent } from '../components/raw.component';
-import { isRawRendering } from '../components/rendering';
 
 export interface ComponentFactoryResult {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -30,12 +30,13 @@ export interface ComponentFactoryResult {
 export class JssComponentFactoryService {
   private componentMap: Map<string, ComponentNameAndType>;
   private lazyComponentMap: Map<string, ComponentNameAndModule>;
+  private components: ComponentNameAndType[];
+  private lazyComponents: ComponentNameAndModule[];
+  private injector = inject(Injector);
 
-  constructor(
-    private injector: Injector,
-    @Inject(PLACEHOLDER_COMPONENTS) private components: ComponentNameAndType[],
-    @Inject(PLACEHOLDER_LAZY_COMPONENTS) private lazyComponents: ComponentNameAndModule[]
-  ) {
+  constructor() {
+    this.components = inject(PLACEHOLDER_COMPONENTS);
+    this.lazyComponents = inject(PLACEHOLDER_LAZY_COMPONENTS);
     this.componentMap = new Map();
     this.lazyComponentMap = new Map();
 

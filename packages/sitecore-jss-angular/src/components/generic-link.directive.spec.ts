@@ -1,4 +1,4 @@
-import { Component, DebugElement, Input, TemplateRef } from '@angular/core';
+import { Component, DebugElement, TemplateRef, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
@@ -12,17 +12,17 @@ import { LinkField } from './rendering-field';
   selector: 'test-router-link',
   template: `
     <a
-      *scGenericLink="field; editable: editable; attrs: attrs; extras: extras"
+      *scGenericLink="field(); editable: editable(); attrs: attrs(); extras: extras()"
       class="external-css-class"
       id="my-link"
     ></a>
   `,
 })
 class TestComponent {
-  @Input() field: LinkField;
-  @Input() editable = true;
-  @Input() attrs = {};
-  @Input() extras = {};
+  readonly field = input<LinkField>(undefined);
+  readonly editable = input(true);
+  readonly attrs = input({});
+  readonly extras = input({});
 }
 
 const emptyLinkFieldEditingTemplateId = 'emptyLinkFieldEditingTemplate';
@@ -50,11 +50,11 @@ const emptyLinkFieldEditingTemplateDefaultTestString =
   `,
 })
 class TestEmptyTemplateComponent {
-  @Input() field: LinkField;
-  @Input() editable = true;
-  @Input() attrs = {};
-  @Input() extras = {};
-  @Input() emptyFieldEditingTemplate: TemplateRef<unknown>;
+  readonly field = input<LinkField>();
+  readonly editable = input(true);
+  readonly attrs = input({});
+  readonly extras = input({});
+  readonly emptyFieldEditingTemplate = input<TemplateRef<unknown>>();
 }
 
 describe('<a *scGenericLink />', () => {
@@ -306,16 +306,18 @@ describe('<a *scGenericLink />', () => {
 @Component({
   selector: 'test-router-link-children',
   template: `
-    <a *scGenericLink="field; editable: editable; attrs: attrs; extras: extras" id="my-link"
-      ><span *ngIf="true">hello world</span></a
+    <a *scGenericLink="field(); editable: editable(); attrs: attrs(); extras: extras()" id="my-link"
+      >@if (true) {
+      <span>hello world</span>
+      }</a
     >
   `,
 })
 class TestWithChildrenComponent {
-  @Input() field: LinkField;
-  @Input() editable = true;
-  @Input() attrs = {};
-  @Input() extras = {};
+  readonly field = input<LinkField>();
+  readonly editable = input(true);
+  readonly attrs = input({});
+  readonly extras = input({});
 }
 
 @Component({
@@ -338,11 +340,11 @@ class TestWithChildrenComponent {
   `,
 })
 class TestEmptyTemplateWithChildrenComponent {
-  @Input() field: LinkField;
-  @Input() editable = true;
-  @Input() attrs = {};
-  @Input() extras = {};
-  @Input() emptyFieldEditingTemplate: TemplateRef<unknown>;
+  readonly field = input<LinkField>();
+  readonly editable = input(true);
+  readonly attrs = input({});
+  readonly extras = input({});
+  readonly emptyFieldEditingTemplate = input<TemplateRef<unknown>>();
 }
 
 describe('<a *scGenericLink>children</a>', () => {
@@ -520,9 +522,9 @@ describe('<a *scGenericLink></a>', () => {
     expect(renderedLink.getAttribute('href')).toBe(`/${field.href}`);
     renderedLink.click();
     fixture.detectChanges();
-    expect(comp.extras).toEqual({});
+    expect(comp.extras()).toEqual({});
     expect(router.navigate).toHaveBeenCalledWith(['lorem'], {
-      ...comp.extras,
+      ...comp.extras(),
       fragment: undefined,
     });
   });

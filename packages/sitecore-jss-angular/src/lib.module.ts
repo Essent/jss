@@ -37,8 +37,8 @@ import { EditingScriptsComponent } from './components/editing-scripts.component'
 import { FormComponent } from './components/form.component';
 
 @NgModule({
-  imports: [CommonModule],
-  declarations: [
+  imports: [
+    CommonModule,
     FileDirective,
     ImageDirective,
     LinkDirective,
@@ -59,6 +59,7 @@ import { FormComponent } from './components/form.component';
     EditingScriptsComponent,
     FormComponent,
   ],
+  declarations: [],
   exports: [
     FileDirective,
     ImageDirective,

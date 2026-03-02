@@ -1,5 +1,5 @@
 import { DatePipe, formatDate } from '@angular/common';
-import { Component, DebugElement, Input, TemplateRef } from '@angular/core';
+import { Component, DebugElement, TemplateRef, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { textField as eeTextData } from '../test-data/ee-data';
@@ -18,16 +18,16 @@ const defaultFormattedDate = formatDate(testIsoDateValue, testFormat, testLocale
   selector: 'test-date',
   template: `
     <span
-      *scDate="field; editable: editable; format: format; locale: locale; timezone: timezone"
+      *scDate="field(); editable: editable(); format: format(); locale: locale(); timezone: timezone()"
     ></span>
   `,
 })
 class TestComponent {
-  @Input() field: TextField;
-  @Input() editable = true;
-  @Input() format = testFormat;
-  @Input() locale = testLocale;
-  @Input() timezone = testTimezone;
+  readonly field = input<TextField>(undefined);
+  readonly editable = input(true);
+  readonly format = input(testFormat);
+  readonly locale = input(testLocale);
+  readonly timezone = input(testTimezone);
 }
 
 const emptyDateFieldEditingTemplateId = 'emptyDateFieldEditingTemplate';
@@ -50,12 +50,12 @@ const emptyDateFieldEditingTemplate =
   `,
 })
 class TestEmptyTemplateComponent {
-  @Input() field: TextField;
-  @Input() editable = true;
-  @Input() format = testFormat;
-  @Input() locale = testLocale;
-  @Input() timezone = testTimezone;
-  @Input() emptyFieldEditingTemplate: TemplateRef<unknown>;
+  readonly field = input<TextField>();
+  readonly editable = input(true);
+  readonly format = input(testFormat);
+  readonly locale = input(testLocale);
+  readonly timezone = input(testTimezone);
+  readonly emptyFieldEditingTemplate = input<TemplateRef<unknown>>();
 }
 
 describe('<span *scDate />', () => {

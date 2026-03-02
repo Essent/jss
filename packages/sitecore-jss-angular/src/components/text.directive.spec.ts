@@ -1,4 +1,4 @@
-import { Component, DebugElement, Input, TemplateRef } from '@angular/core';
+import { Component, DebugElement, TemplateRef, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
@@ -9,13 +9,13 @@ import { TextDirective } from './text.directive';
 @Component({
   selector: 'test-text',
   template: `
-    <span *scText="field; editable: editable; encode: encode"></span>
+    <span *scText="field(); editable: editable(); encode: encode()"></span>
   `,
 })
 class TestComponent {
-  @Input() field: TextField;
-  @Input() editable = true;
-  @Input() encode = true;
+  readonly field = input<TextField>(undefined);
+  readonly editable = input(true);
+  readonly encode = input(true);
 }
 
 const emptyTextFieldEditingTemplateId = 'emptyTextFieldEditingTemplate';
@@ -40,10 +40,10 @@ const emptyTextFieldEditingTemplate =
   `,
 })
 class TestEmptyTemplateComponent {
-  @Input() field: TextField;
-  @Input() emptyFieldEditingTemplate: TemplateRef<unknown>;
-  @Input() editable = true;
-  @Input() encode = true;
+  readonly field = input<TextField>();
+  readonly emptyFieldEditingTemplate = input<TemplateRef<unknown>>();
+  readonly editable = input(true);
+  readonly encode = input(true);
 }
 
 describe('<span *scText />', () => {

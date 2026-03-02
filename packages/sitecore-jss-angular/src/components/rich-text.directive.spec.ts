@@ -1,4 +1,4 @@
-import { Component, DebugElement, Input, TemplateRef } from '@angular/core';
+import { Component, DebugElement, TemplateRef, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
@@ -11,12 +11,12 @@ import { RichTextDirective } from './rich-text.directive';
 @Component({
   selector: 'test-rich-text',
   template: `
-    <h1 *scRichText="field; editable: editable"></h1>
+    <h1 *scRichText="field(); editable: editable()"></h1>
   `,
 })
 class TestComponent {
-  @Input() field: RichTextField;
-  @Input() editable = true;
+  readonly field = input<RichTextField>(undefined);
+  readonly editable = input(true);
 }
 
 const emptyTextFieldEditingTemplateId = 'emptyTextFieldEditingTemplate';
@@ -39,9 +39,9 @@ const emptyTextFieldEditingTemplate =
   `,
 })
 class TestEmptyTemplateComponent {
-  @Input() field: RichTextField;
-  @Input() emptyFieldEditingTemplate: TemplateRef<unknown>;
-  @Input() editable = true;
+  readonly field = input<RichTextField>();
+  readonly emptyFieldEditingTemplate = input<TemplateRef<unknown>>();
+  readonly editable = input(true);
 }
 
 describe('<div *scRichText />', () => {

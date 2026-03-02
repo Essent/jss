@@ -1,4 +1,4 @@
-import { Component, DebugElement, Input } from '@angular/core';
+import { Component, DebugElement, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
@@ -8,11 +8,11 @@ import { FileField } from './rendering-field';
 @Component({
   selector: 'test-file',
   template: `
-    <a *scFile="field"></a>
+    <a *scFile="field()"></a>
   `,
 })
 class TestComponent {
-  @Input() field: FileField;
+  readonly field = input<FileField>(undefined);
 }
 
 describe('<a *scFile />', () => {

@@ -1,4 +1,4 @@
-import { Component, DebugElement, Input, TemplateRef } from '@angular/core';
+import { Component, DebugElement, TemplateRef, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
@@ -8,12 +8,12 @@ import { TestBaseDirective } from '../test-data/test-base.directive';
 @Component({
   selector: 'test-base',
   template: `
-    <span *scTestBase="field; editable: editable"></span>
+    <span *scTestBase="field(); editable: editable()"></span>
   `,
 })
 class TestComponent {
-  @Input() field: TextField;
-  @Input() editable = true;
+  readonly field = input<TextField>(undefined);
+  readonly editable = input(true);
 }
 
 const emptyTextFieldEditingTemplateId = 'emptyTextFieldEditingTemplate';
@@ -37,9 +37,9 @@ const emptyTextFieldEditingTemplate =
   `,
 })
 class TestEmptyTemplateComponent {
-  @Input() field: TextField;
-  @Input() emptyFieldEditingTemplate: TemplateRef<unknown>;
-  @Input() editable = true;
+  readonly field = input<TextField>();
+  readonly emptyFieldEditingTemplate = input<TemplateRef<unknown>>();
+  readonly editable = input(true);
 }
 
 describe('<span *scTestBase />', () => {

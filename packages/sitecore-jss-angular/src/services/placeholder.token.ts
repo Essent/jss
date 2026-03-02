@@ -60,7 +60,7 @@ export function instanceOfComponentNameAndModule(
 export const PLACEHOLDER_COMPONENTS = new InjectionToken<ComponentNameAndType[]>(
   'Sc.placeholder.components'
 );
-export const PLACEHOLDER_LAZY_COMPONENTS = new InjectionToken<ComponentNameAndType[]>(
+export const PLACEHOLDER_LAZY_COMPONENTS = new InjectionToken<ComponentNameAndModule[]>(
   'Sc.placeholder.lazyComponents'
 );
 export const PLACEHOLDER_MISSING_COMPONENT_COMPONENT = new InjectionToken<Type<unknown>>(

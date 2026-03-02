@@ -2,13 +2,13 @@ import { Location } from '@angular/common';
 import {
   Component,
   DebugElement,
-  EventEmitter,
+  inject,
   Injectable,
   input,
   Input,
-  Output,
   TemplateRef,
-  ViewChild,
+  output,
+  viewChild
 } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -35,15 +35,15 @@ import { MissingComponentComponent } from './missing-component.component';
 @Component({
   selector: 'test-placeholder',
   template: `
-    <sc-placeholder [name]="name" [rendering]="rendering">
+    <sc-placeholder [name]="name()" [rendering]="rendering()">
       <img *scPlaceholderLoading src="loading.gif" />
     </sc-placeholder>
   `,
 })
 class TestPlaceholderComponent {
-  @Input() rendering: ComponentRendering;
-  @Input() name: string;
-  @Input() data: unknown;
+  readonly rendering = input<ComponentRendering>(undefined);
+  readonly name = input<string>(undefined);
+  readonly data = input<unknown>();
 }
 
 @Component({
@@ -62,13 +62,13 @@ class TestDownloadCalloutComponent {
   selector: 'test-home',
   styles: ['sc-placeholder[name="page-content"] { background-color: red }'],
   template: `
-    <sc-placeholder name="page-header" [rendering]="rendering"></sc-placeholder>
-    <sc-placeholder name="page-content" [rendering]="rendering"></sc-placeholder>
+    <sc-placeholder name="page-header" [rendering]="rendering()"></sc-placeholder>
+    <sc-placeholder name="page-content" [rendering]="rendering()"></sc-placeholder>
   `,
 })
 class TestHomeComponent {
-  @Input() rendering: ComponentRendering;
-  @Input() data: unknown;
+  readonly rendering = input<ComponentRendering>();
+  readonly data = input<unknown>();
 }
 
 @Component({
@@ -76,8 +76,8 @@ class TestHomeComponent {
   template: '',
 })
 class TestJumbotronComponent {
-  @Input() rendering: ComponentRendering;
-  @Input() data: unknown;
+  readonly rendering = input<ComponentRendering>();
+  readonly data = input<unknown>();
 }
 
 describe('<sc-placeholder />', () => {
@@ -339,8 +339,8 @@ describe('<sc-placeholder />', () => {
   selector: 'test-parent',
   template: `
     <sc-placeholder
-      [name]="name"
-      [rendering]="rendering"
+      [name]="name()"
+      [rendering]="rendering()"
       [inputs]="inputs"
       [outputs]="outputs"
     ></sc-placeholder>
@@ -348,9 +348,9 @@ describe('<sc-placeholder />', () => {
   `,
 })
 class TestParentComponent {
-  @Input() rendering: ComponentRendering;
-  @Input() data: unknown;
-  @Input() name: string;
+  readonly rendering = input<ComponentRendering>(undefined);
+  readonly data = input<unknown>();
+  readonly name = input<string>(undefined);
   clickMessage = '';
   public inputs = {
     childMessage: '',
@@ -369,17 +369,17 @@ class TestParentComponent {
 @Component({
   selector: 'test-child',
   template: `
-    {{ childMessage }}
-    {{ childNumber() }}
+    {{ childMessage() }}
+    {{ childNumber()() }}
     <button (click)="triggerEvent()">Button</button>
   `,
 })
 class TestChildComponent {
-  @Input() rendering: ComponentRendering;
-  @Input() data: unknown;
-  @Input() childMessage: string;
-  @Input() childNumber: number;
-  @Output() childEvent: EventEmitter<string> = new EventEmitter<string>();
+  readonly rendering = input<ComponentRendering>();
+  readonly data = input<unknown>();
+  readonly childMessage = input<string>();
+  readonly childNumber = input<number>();
+  readonly childEvent = output<string>();
 
   triggerEvent() {
     this.childEvent.emit('dolor');
@@ -509,7 +509,7 @@ describe('<sc-placeholder /> with input/output binding', () => {
   template: `
     <sc-placeholder
       name="main"
-      [rendering]="rendering"
+      [rendering]="rendering()"
       (loaded)="loaded = $event"
       (failed)="failed = $event"
     >
@@ -518,14 +518,14 @@ describe('<sc-placeholder /> with input/output binding', () => {
   `,
 })
 class TestLazyPlaceholderComponent {
-  @Input() rendering: ComponentRendering;
+  readonly rendering = input<ComponentRendering>(undefined);
   loaded: string | undefined;
   failed: Error | undefined;
 }
 
 @Injectable()
 class MockUrlTreeGuard implements JssCanActivate {
-  constructor(private readonly router: Router) {}
+  private readonly router = inject(Router);
 
   canActivate() {
     return this.router.parseUrl('/404');
@@ -534,7 +534,7 @@ class MockUrlTreeGuard implements JssCanActivate {
 
 @Injectable()
 class MockRedirectCommandGuard implements JssCanActivate {
-  constructor(private readonly router: Router) {}
+  private readonly router = inject(Router);
 
   canActivate() {
     return new RedirectCommand(this.router.parseUrl('/404'));
@@ -721,24 +721,24 @@ describe('<sc-placeholder /> with lazy loaded modules', () => {
     </ng-template>
 
     <ng-template #withTitle>
-      <div class="title" *scText="rendering.fields.Title"></div>
-      <div class="text" *scText="rendering.fields.Text"></div>
+      <div class="title" *scText="rendering().fields.Title"></div>
+      <div class="text" *scText="rendering().fields.Text"></div>
     </ng-template>
 
-    <div class="rendering-variant {{ rendering.params.styles }}">
+    <div class="rendering-variant {{ rendering().params.styles }}">
       <ng-container [ngTemplateOutlet]="variant"></ng-container>
     </div>
   `,
 })
 class TestRichTextComponent {
-  @Input() rendering: ComponentRendering;
-  @Input() data: unknown;
-  @ViewChild('default', { static: true }) defaultVariant: TemplateRef<any>;
-  @ViewChild('withTitle', { static: true }) withTitleVariant: TemplateRef<any>;
+  readonly rendering = input<ComponentRendering>();
+  readonly data = input<unknown>();
+  readonly defaultVariant = viewChild<TemplateRef<any>>('default');
+  readonly withTitleVariant = viewChild<TemplateRef<any>>('withTitle');
   public get variant(): TemplateRef<any> {
-    return this.rendering.params?.FieldNames === 'WithTitle'
-      ? this.withTitleVariant
-      : this.defaultVariant;
+    return this.rendering().params?.FieldNames === 'WithTitle'
+      ? this.withTitleVariant()
+      : this.defaultVariant();
   }
 }
 
@@ -887,8 +887,8 @@ describe('Placeholder Metadata:', () => {
     `,
   })
   class TestNestingComponent {
-    @Input() rendering: ComponentRendering;
-    @Input() data: unknown;
+    readonly rendering = input<ComponentRendering>();
+    readonly data = input<unknown>();
     nestedRendering: ComponentRendering = layoutData.sitecore.route.placeholders.main[0];
   }
 
@@ -899,8 +899,8 @@ describe('Placeholder Metadata:', () => {
     `,
   })
   class LogoComponent {
-    @Input() rendering: ComponentRendering;
-    @Input() data: unknown;
+    readonly rendering = input<ComponentRendering>();
+    readonly data = input<unknown>();
   }
 
   let fixture: ComponentFixture<TestPlaceholderComponent>;
@@ -1100,8 +1100,8 @@ describe('Placeholder Metadata: dynamic placeholder:', () => {
     `,
   })
   class TestNestingComponent {
-    @Input() rendering: ComponentRendering;
-    @Input() data: unknown;
+    readonly rendering = input<ComponentRendering>();
+    readonly data = input<unknown>();
     nestedRendering: ComponentRendering = layoutData.sitecore.route.placeholders.main[0];
   }
 
@@ -1112,8 +1112,8 @@ describe('Placeholder Metadata: dynamic placeholder:', () => {
     `,
   })
   class LogoComponent {
-    @Input() rendering: ComponentRendering;
-    @Input() data: unknown;
+    readonly rendering = input<ComponentRendering>();
+    readonly data = input<unknown>();
   }
 
   let fixture: ComponentFixture<TestPlaceholderComponent>;

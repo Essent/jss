@@ -1,4 +1,5 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { Component, OnChanges, input } from '@angular/core';
 import {
   EditFrameDataSource,
   ChromeCommand,
@@ -13,57 +14,59 @@ import { LayoutServiceContextData, RouteData } from '@sitecore-jss/sitecore-jss/
     <ng-template #childContent>
       <ng-content></ng-content>
     </ng-template>
-    <div
-      *ngIf="isEditing; else elseBlock"
-      [class]="frameProps.class"
-      [attr.sc_item]="frameProps.sc_item"
-    >
+    @if (isEditing) {
+    <div [class]="frameProps.class" [attr.sc_item]="frameProps.sc_item">
       <span class="scChromeData">{{ chromeData }}</span>
       <ng-container *ngTemplateOutlet="childContent"></ng-container>
     </div>
-    <ng-template #elseBlock>
-      <ng-container *ngTemplateOutlet="childContent"></ng-container>
-    </ng-template>
+    } @else {
+    <ng-container *ngTemplateOutlet="childContent"></ng-container>
+    }
   `,
+  imports: [NgTemplateOutlet],
 })
 export class EditFrameComponent implements OnChanges {
-  @Input() dataSource: EditFrameDataSource;
+  readonly dataSource = input<EditFrameDataSource>();
 
-  @Input() buttons: EditButtonTypes[];
+  readonly buttons = input<EditButtonTypes[]>();
 
-  @Input() title: string;
+  readonly title = input<string>();
 
-  @Input() tooltip: string;
+  readonly tooltip = input<string>();
 
-  @Input() cssClass: string;
+  readonly cssClass = input<string>();
 
-  @Input() parameters: Record<string, string | number | boolean | undefined | null>;
+  readonly parameters = input<Record<string, string | number | boolean | undefined | null>>();
 
-  @Input() sitecore: LayoutServiceContextData & {
-    route: RouteData<unknown> | null;
-  };
+  readonly sitecore = input<
+    LayoutServiceContextData & {
+      route: RouteData<unknown> | null;
+    }
+  >();
 
   isEditing = false;
   frameProps: Record<string, unknown> = {};
   chromeData = '';
 
   ngOnChanges() {
-    this.isEditing = this.sitecore.context.pageEditing || false;
-    if (!this.isEditing) {
+    const sitecore = this.sitecore();
+    if (!sitecore?.context.pageEditing) {
       return;
     }
 
     this.frameProps.class = 'scLooseFrameZone';
-    if (this.cssClass) {
-      this.frameProps.class = `${this.frameProps.class} ${this.cssClass}`;
+    const cssClass = this.cssClass();
+    if (cssClass) {
+      this.frameProps.class = `${this.frameProps.class} ${cssClass}`;
     }
 
     // item uri for edit frame target
-    if (this.dataSource) {
-      const route = this.sitecore.route;
-      const databaseName = this.dataSource.databaseName || route?.databaseName;
-      const language = this.dataSource.language || this.sitecore.context.language;
-      this.frameProps.sc_item = `sitecore://${databaseName}/${this.dataSource.itemId}?lang=${language}`;
+    const dataSource = this.dataSource();
+    if (dataSource) {
+      const route = sitecore.route;
+      const databaseName = dataSource.databaseName || route?.databaseName;
+      const language = dataSource.language || sitecore.context.language;
+      this.frameProps.sc_item = `sitecore://${databaseName}/${dataSource.itemId}?lang=${language}`;
     }
 
     this.chromeData = this.buildChromeData();
@@ -71,17 +74,17 @@ export class EditFrameComponent implements OnChanges {
 
   buildChromeData() {
     const chromeData: Record<string, unknown> = {
-      displayName: this.title,
-      expandedDisplayName: this.tooltip,
+      displayName: this.title(),
+      expandedDisplayName: this.tooltip(),
     };
 
-    if (this.dataSource) {
+    if (this.dataSource()) {
       chromeData.contextItemUri = this.frameProps.sc_item;
     }
 
-    chromeData.commands = this.buttons?.map(
+    chromeData.commands = this.buttons()?.map(
       (value): ChromeCommand => {
-        return mapButtonToCommand(value, this.dataSource?.itemId, this.parameters);
+        return mapButtonToCommand(value, this.dataSource()?.itemId, this.parameters());
       }
     );
 

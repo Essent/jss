@@ -1,30 +1,27 @@
 import {
   Directive,
-  Input,
   OnChanges,
   SimpleChanges,
   TemplateRef,
   Type,
-  ViewContainerRef,
+  inject,
+  input
 } from '@angular/core';
-import { TextField } from '../components/rendering-field';
+import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
 import { BaseFieldDirective } from '../components/base-field.directive';
 import { DefaultEmptyFieldEditingComponent } from '../components/default-empty-text-field-editing-placeholder.component';
-import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
+import { TextField } from '../components/rendering-field';
 
 @Directive({
   selector: '[scTestBase]',
 })
 export class TestBaseDirective extends BaseFieldDirective implements OnChanges {
-  @Input('scTestBaseEditable') editable = true;
-  @Input('scTestBase') field: TextField;
-  @Input('scTestBaseEmptyFieldEditingTemplate') emptyFieldEditingTemplate: TemplateRef<unknown>;
-  protected defaultFieldEditingComponent: Type<unknown>;
+  readonly editable = input(true, { alias: "scTestBaseEditable" });
+  readonly field = input<TextField>(undefined, { alias: "scTestBase" });
+  readonly emptyFieldEditingTemplate = input<TemplateRef<unknown>>(undefined, { alias: "scTestBaseEmptyFieldEditingTemplate" });
+  protected defaultFieldEditingComponent: Type<unknown> = DefaultEmptyFieldEditingComponent;
 
-  constructor(viewContainer: ViewContainerRef, private templateRef: TemplateRef<unknown>) {
-    super(viewContainer);
-    this.defaultFieldEditingComponent = DefaultEmptyFieldEditingComponent;
-  }
+  private templateRef = inject<TemplateRef<unknown>>(TemplateRef);
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.field || changes.editable || changes.encode) {
@@ -44,8 +41,8 @@ export class TestBaseDirective extends BaseFieldDirective implements OnChanges {
     this.viewRef = this.viewContainer.createEmbeddedView(this.templateRef);
     this.renderMetadata(MetadataKind.Close);
 
-    const field = this.field;
-    const editable = this.editable;
+    const field = this.field();
+    const editable = this.editable();
 
     const html = field.editable && editable ? field.editable : field.value;
 

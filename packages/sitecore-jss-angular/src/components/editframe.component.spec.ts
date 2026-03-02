@@ -1,4 +1,4 @@
-import { Component, DebugElement, Input, OnInit } from '@angular/core';
+import { Component, DebugElement, OnInit, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
@@ -42,12 +42,12 @@ const normalContext = {
   template: `
     <div>
       <sc-edit-frame
-        [title]="title"
-        [tooltip]="tooltip"
-        [cssClass]="cssClass"
-        [dataSource]="dataSource"
-        [buttons]="buttons"
-        [sitecore]="sitecore"
+        [title]="title()"
+        [tooltip]="tooltip()"
+        [cssClass]="cssClass()"
+        [dataSource]="dataSource()"
+        [buttons]="buttons()"
+        [sitecore]="sitecore()"
       >
         Wrapped text
       </sc-edit-frame>
@@ -55,21 +55,21 @@ const normalContext = {
   `,
 })
 class TestComponent implements OnInit {
-  @Input() dataSource: EditFrameDataSource;
+  readonly dataSource = input<EditFrameDataSource>(undefined);
 
-  @Input() buttons: EditButtonTypes[];
+  readonly buttons = input<EditButtonTypes[]>(undefined);
 
-  @Input() title: string;
+  readonly title = input<string>(undefined);
 
-  @Input() tooltip: string;
+  readonly tooltip = input<string>(undefined);
 
-  @Input() cssClass: string;
+  readonly cssClass = input<string>(undefined);
 
-  @Input() parameters: Record<string, string | number | boolean | undefined | null>;
+  readonly parameters = input<Record<string, string | number | boolean | undefined | null>>();
 
-  @Input() sitecore: LayoutServiceContextData & {
+  readonly sitecore = input<LayoutServiceContextData & {
     route: RouteData<unknown> | null;
-  };
+}>(undefined);
 
   ngOnInit() {
     this.sitecore = normalContext;

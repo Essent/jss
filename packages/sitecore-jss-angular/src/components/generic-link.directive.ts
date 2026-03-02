@@ -1,42 +1,31 @@
-import {
-  Directive,
-  ElementRef,
-  Input,
-  Renderer2,
-  TemplateRef,
-  ViewContainerRef,
-} from '@angular/core';
-import { Router, NavigationExtras } from '@angular/router';
+import { Directive, InputSignal, TemplateRef, inject, input } from '@angular/core';
+import { NavigationExtras, Router } from '@angular/router';
 import { isAbsoluteUrl } from '@sitecore-jss/sitecore-jss/utils';
 import { LinkDirective } from './link.directive';
 import { LinkField } from './rendering-field';
 
 @Directive({ selector: '[scGenericLink]' })
 export class GenericLinkDirective extends LinkDirective {
-  @Input('scGenericLinkEditable') editable = true;
+  readonly editable = input(true, { alias: 'scGenericLinkEditable' });
 
-  @Input('scGenericLinkAttrs') attrs: { [key: string]: string } = {};
+  readonly attrs = input<{
+    [key: string]: string;
+  }>({}, { alias: 'scGenericLinkAttrs' });
 
-  @Input('scGenericLink') declare field: LinkField;
+  readonly field: InputSignal<LinkField | undefined> = input<LinkField | undefined>(undefined, {
+    alias: 'scGenericLink',
+  });
 
-  @Input('scGenericLinkExtras') extras?: NavigationExtras;
+  readonly extras = input<NavigationExtras>(undefined, { alias: 'scGenericLinkExtras' });
 
   /**
    * Custom template to render in Pages in Metadata edit mode if field value is empty
    */
-  @Input('scGenericLinkEmptyFieldEditingTemplate') declare emptyFieldEditingTemplate: TemplateRef<
-    unknown
-  >;
+  readonly emptyFieldEditingTemplate = input<TemplateRef<unknown>>(undefined, {
+    alias: 'scGenericLinkEmptyFieldEditingTemplate',
+  });
 
-  constructor(
-    viewContainer: ViewContainerRef,
-    templateRef: TemplateRef<unknown>,
-    renderer: Renderer2,
-    elementRef: ElementRef,
-    private router: Router
-  ) {
-    super(viewContainer, templateRef, renderer, elementRef);
-  }
+  private readonly router = inject(Router);
 
   protected renderTemplate(props: { [key: string]: string }, linkText: string) {
     const viewRef = this.viewContainer.createEmbeddedView(this.templateRef);
@@ -49,13 +38,13 @@ export class GenericLinkDirective extends LinkDirective {
           const anchor = fragments[1];
           const urlTree = this.router.createUrlTree([url], {
             fragment: anchor,
-            ...this.extras,
+            ...this.extras(),
           });
           this.updateAttribute(node, key, this.router.serializeUrl(urlTree));
           this.renderer.listen(node, 'click', (event) => {
             this.router.navigate([url], {
               fragment: anchor,
-              ...this.extras,
+              ...this.extras(),
             });
 
             // shouldn't prevent default if the link includes a fragment

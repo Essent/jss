@@ -1,4 +1,4 @@
-import { Component, DebugElement, Input, TemplateRef } from '@angular/core';
+import { Component, DebugElement, TemplateRef, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
@@ -9,12 +9,12 @@ import { ImageField } from './rendering-field';
 @Component({
   selector: 'test-image',
   template: `
-    <img class="some" id="another" *scImage="field; editable: editable" />
+    <img class="some" id="another" *scImage="field(); editable: editable()" />
   `,
 })
 class TestComponent {
-  @Input() field: ImageField | '';
-  @Input() editable = true;
+  readonly field = input<ImageField | ''>(undefined);
+  readonly editable = input(true);
 }
 
 @Component({
@@ -24,21 +24,25 @@ class TestComponent {
       height="1"
       width="1"
       *scImage="
-        field;
-        editable: editable;
-        urlParams: params;
-        attrs: imageAttrs;
-        mediaUrlPrefix: mediaUrlPrefix
+        field();
+        editable: editable();
+        urlParams: params();
+        attrs: imageAttrs();
+        mediaUrlPrefix: mediaUrlPrefix()
       "
     />
   `,
 })
 class AnotherTestComponent {
-  @Input() field: ImageField;
-  @Input() editable = true;
-  @Input() params: { [param: string]: string | number } = {};
-  @Input() imageAttrs: { [param: string]: unknown } = {};
-  @Input() mediaUrlPrefix?: RegExp;
+  readonly field = input<ImageField>(undefined);
+  readonly editable = input(true);
+  readonly params = input<{
+    [param: string]: string | number;
+}>({});
+  readonly imageAttrs = input<{
+    [param: string]: unknown;
+}>({});
+  readonly mediaUrlPrefix = input<RegExp>(undefined);
 }
 
 const emptyImageFieldEditingTemplateId = 'emptyImageFieldEditingTemplate';
@@ -64,9 +68,9 @@ const emptyImageFieldEditingTemplateDefaultTestString =
   `,
 })
 class TestEmptyTemplateComponent {
-  @Input() field: ImageField;
-  @Input() emptyFieldEditingTemplate: TemplateRef<unknown>;
-  @Input() editable = true;
+  readonly field = input<ImageField>();
+  readonly emptyFieldEditingTemplate = input<TemplateRef<unknown>>();
+  readonly editable = input(true);
 }
 
 describe('<img *scImage />', () => {

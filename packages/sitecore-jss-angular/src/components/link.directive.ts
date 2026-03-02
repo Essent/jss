@@ -1,48 +1,48 @@
 import {
   Directive,
   ElementRef,
-  Input,
+  InputSignal,
   OnChanges,
   Renderer2,
   SimpleChanges,
   TemplateRef,
   Type,
-  ViewContainerRef,
+  inject,
+  input,
 } from '@angular/core';
-import { LinkField } from './rendering-field';
+import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
 import { BaseFieldDirective } from './base-field.directive';
 import { DefaultEmptyFieldEditingComponent } from './default-empty-text-field-editing-placeholder.component';
-import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
+import { LinkField } from './rendering-field';
 
 @Directive({ selector: '[scLink]' })
 export class LinkDirective extends BaseFieldDirective implements OnChanges {
-  @Input('scLinkEditable') editable = true;
+  readonly editable = input(true, { alias: 'scLinkEditable' });
 
-  @Input('scLinkAttrs') attrs: { [attr: string]: string } = {};
+  readonly attrs = input<{
+    [attr: string]: string;
+  }>({}, { alias: 'scLinkAttrs' });
 
-  @Input('scLink') field: LinkField;
+  readonly field: InputSignal<LinkField | undefined> = input<LinkField | undefined>(undefined, {
+    alias: 'scLink',
+  });
 
   /**
    * Custom template to render in Pages in Metadata edit mode if field value is empty
    */
-  @Input('scLinkEmptyFieldEditingTemplate') emptyFieldEditingTemplate: TemplateRef<unknown>;
+  readonly emptyFieldEditingTemplate = input<TemplateRef<unknown>>(undefined, {
+    alias: 'scLinkEmptyFieldEditingTemplate',
+  });
 
   /**
    * Default component to render in Pages in Metadata edit mode if field value is empty and emptyFieldEditingTemplate is not provided
    */
-  protected defaultFieldEditingComponent: Type<unknown>;
+  protected defaultFieldEditingComponent: Type<unknown> = DefaultEmptyFieldEditingComponent;
+  protected readonly templateRef = inject<TemplateRef<unknown>>(TemplateRef);
+  protected readonly renderer = inject(Renderer2);
+  private readonly elementRef = inject(ElementRef);
 
   private inlineRef: HTMLSpanElement | null = null;
-
-  constructor(
-    viewContainer: ViewContainerRef,
-    protected templateRef: TemplateRef<unknown>,
-    protected renderer: Renderer2,
-    private elementRef: ElementRef
-  ) {
-    super(viewContainer);
-    this.defaultFieldEditingComponent = DefaultEmptyFieldEditingComponent;
-  }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.field || changes.editable || changes.attrs) {
@@ -100,15 +100,14 @@ export class LinkDirective extends BaseFieldDirective implements OnChanges {
    * The right side of the expression was added to preserve existing functionality
    */
   protected shouldRender() {
-    return (
-      super.shouldRender() ||
-      !!((this.field?.text || this.field?.value?.text) && !this.field?.metadata)
-    );
+    const field = this.field();
+    return super.shouldRender() || !!((field?.text || field?.value?.text) && !field?.metadata);
   }
 
   private updateView() {
-    const field = this.field;
-    if (this.editable && field && field.editableFirstPart && field.editableLastPart) {
+    const field = this.field();
+
+    if (this.editable() && field && field.editableFirstPart && field.editableLastPart) {
       this.renderInlineWrapper(field.editableFirstPart, field.editableLastPart);
     } else {
       if (!this.shouldRender()) {
@@ -122,7 +121,7 @@ export class LinkDirective extends BaseFieldDirective implements OnChanges {
       const anchor = props?.anchor ? `#${props.anchor}` : '';
       const href = `${props?.href}${anchor}`;
 
-      const mergedAttrs = { ...props, ...this.attrs, href };
+      const mergedAttrs = { ...props, ...this.attrs(), href };
 
       delete mergedAttrs.anchor;
       this.renderMetadata(MetadataKind.Open);
@@ -139,7 +138,7 @@ export class LinkDirective extends BaseFieldDirective implements OnChanges {
     // assign attributes from template to inline wrapper
     const attrs = {
       ...this.getElementAttrs(),
-      ...this.attrs,
+      ...this.attrs(),
     };
     Object.entries(attrs).forEach(([key, attrValue]) => this.updateAttribute(span, key, attrValue));
 

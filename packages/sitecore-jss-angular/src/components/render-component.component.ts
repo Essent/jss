@@ -1,15 +1,16 @@
 import {
   Component,
   ComponentRef,
-  Inject,
   Input,
   KeyValueDiffer,
   KeyValueDiffers,
   OnChanges,
   SimpleChanges,
   Type,
-  ViewChild,
   ViewContainerRef,
+  inject,
+  input,
+  viewChild,
 } from '@angular/core';
 import { ComponentRendering, HtmlElementRendering } from '@sitecore-jss/sitecore-jss/layout';
 import { Observable } from 'rxjs';
@@ -33,20 +34,23 @@ import { isRawRendering } from './rendering';
   `,
 })
 export class RenderComponentComponent implements OnChanges {
-  @Input() rendering: ComponentRendering | HtmlElementRendering;
-  @Input() outputs: { [k: string]: (eventType: unknown) => void };
-  @ViewChild('view', { read: ViewContainerRef, static: true }) private view: ViewContainerRef;
+  readonly rendering = input<ComponentRendering | HtmlElementRendering>();
+  readonly outputs = input<{
+    [k: string]: (eventType: unknown) => void;
+  }>();
+  private readonly view = viewChild.required('view', { read: ViewContainerRef });
+
+  private readonly differs = inject(KeyValueDiffers);
+  private readonly componentFactory = inject(JssComponentFactoryService);
+  private readonly missingComponentComponent = inject<
+    Type<{
+      [key: string]: unknown;
+    }>
+  >(PLACEHOLDER_MISSING_COMPONENT_COMPONENT);
 
   private _inputs: { [key: string]: unknown };
   private _differ: KeyValueDiffer<string, unknown>;
   private destroyed = false;
-
-  constructor(
-    private differs: KeyValueDiffers,
-    private componentFactory: JssComponentFactoryService,
-    @Inject(PLACEHOLDER_MISSING_COMPONENT_COMPONENT)
-    private missingComponentComponent: Type<{ [key: string]: unknown }>
-  ) {}
 
   @Input()
   set inputs(value: { [key: string]: unknown }) {
@@ -87,18 +91,20 @@ export class RenderComponentComponent implements OnChanges {
   }
 
   private _render() {
-    this.view.clear();
+    const view = this.view();
+    view.clear();
 
-    if (!this.rendering) {
+    const renderingValue = this.rendering();
+    if (!renderingValue) {
       return;
     }
 
-    const resolveComponent: Promise<ComponentFactoryResult> = isRawRendering(this.rendering)
+    const resolveComponent: Promise<ComponentFactoryResult> = isRawRendering(renderingValue)
       ? Promise.resolve({
           componentImplementation: RawComponent,
-          componentDefinition: this.rendering,
+          componentDefinition: renderingValue,
         })
-      : this.componentFactory.getComponent(this.rendering);
+      : this.componentFactory.getComponent(renderingValue);
 
     resolveComponent.then((rendering) => {
       if (!rendering.componentImplementation) {
@@ -114,13 +120,14 @@ export class RenderComponentComponent implements OnChanges {
         rendering.componentImplementation = this.missingComponentComponent;
       }
 
-      const componentRef = this.view.createComponent(rendering.componentImplementation);
+      const componentRef = view.createComponent(rendering.componentImplementation);
       componentRef.setInput('rendering', rendering.componentDefinition);
       if (this._inputs) {
         this._setComponentInputs(componentRef, this._inputs);
       }
-      if (this.outputs) {
-        this._subscribeComponentOutputs(componentRef.instance, this.outputs);
+      const outputs = this.outputs();
+      if (outputs) {
+        this._subscribeComponentOutputs(componentRef.instance, outputs);
       }
     });
   }

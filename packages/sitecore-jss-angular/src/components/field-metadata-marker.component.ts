@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
 
 /**
@@ -7,22 +7,19 @@ import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
 @Component({
   selector: 'code[scFieldMetadataMarker]',
   template: '{{ metadataString }}',
-  // eslint-disable-next-line @angular-eslint/no-host-metadata-property -- the only way to set static attributes
   host: {
     '[attr.type]': '"text/sitecore"',
     '[attr.chrometype]': '"field"',
     '[class]': '"scpm"',
+    '[attr.kind]': 'kind()',
   },
 })
 export class FieldMetadataMarkerComponent {
-  @Input()
-  metadata?: any;
-
-  @HostBinding('attr.kind')
-  @Input()
-  kind: MetadataKind = MetadataKind.Open;
+  readonly metadata = input<any>();
+  readonly kind = input<MetadataKind>(MetadataKind.Open);
 
   get metadataString(): string {
-    return this.metadata ? JSON.stringify(this.metadata) : '';
+    const metadata = this.metadata();
+    return metadata ? JSON.stringify(metadata) : '';
   }
 }

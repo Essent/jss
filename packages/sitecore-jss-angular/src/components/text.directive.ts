@@ -1,41 +1,43 @@
 import {
   Directive,
-  Input,
+  InputSignal,
   OnChanges,
   SimpleChanges,
   TemplateRef,
   Type,
-  ViewContainerRef,
+  inject,
+  input,
 } from '@angular/core';
-import { TextField } from './rendering-field';
+import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
 import { BaseFieldDirective } from './base-field.directive';
 import { DefaultEmptyFieldEditingComponent } from './default-empty-text-field-editing-placeholder.component';
-import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
+import { TextField } from './rendering-field';
 
 @Directive({
   selector: '[scText]',
 })
 export class TextDirective extends BaseFieldDirective implements OnChanges {
-  @Input('scTextEditable') editable = true;
+  readonly editable = input(true, { alias: 'scTextEditable' });
 
-  @Input('scTextEncode') encode = true;
+  readonly encode = input(true, { alias: 'scTextEncode' });
 
-  @Input('scText') field: TextField;
+  readonly field: InputSignal<TextField | undefined> = input<TextField | undefined>(undefined, {
+    alias: 'scText',
+  });
 
   /**
    * Custom template to render in Pages in Metadata edit mode if field value is empty
    */
-  @Input('scTextEmptyFieldEditingTemplate') emptyFieldEditingTemplate: TemplateRef<unknown>;
+  readonly emptyFieldEditingTemplate = input<TemplateRef<unknown>>(undefined, {
+    alias: 'scTextEmptyFieldEditingTemplate',
+  });
 
   /**
    * Default component to render in Pages in Metadata edit mode if field value is empty and emptyFieldEditingTemplate is not provided
    */
-  protected defaultFieldEditingComponent: Type<unknown>;
+  protected defaultFieldEditingComponent: Type<unknown> = DefaultEmptyFieldEditingComponent;
 
-  constructor(viewContainer: ViewContainerRef, private templateRef: TemplateRef<unknown>) {
-    super(viewContainer);
-    this.defaultFieldEditingComponent = DefaultEmptyFieldEditingComponent;
-  }
+  private templateRef = inject<TemplateRef<unknown>>(TemplateRef);
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.field || changes.editable || changes.encode) {
@@ -51,20 +53,21 @@ export class TextDirective extends BaseFieldDirective implements OnChanges {
       return;
     }
 
+    const field = this.field();
     this.renderMetadata(MetadataKind.Open);
     this.viewRef = this.viewContainer.createEmbeddedView(this.templateRef);
     this.renderMetadata(MetadataKind.Close);
 
-    const field = this.field;
-    let editable = this.editable;
+    let editable = this.editable();
 
     // can't use editable value if we want to output unencoded
-    if (!this.encode) {
+    const encode = this.encode();
+    if (!encode) {
       editable = false;
     }
 
     const html = field.editable && editable ? field.editable : field.value;
-    const setDangerously = (field.editable && editable) || !this.encode;
+    const setDangerously = (field.editable && editable) || !encode;
 
     this.viewRef.rootNodes.forEach((node) => {
       if (setDangerously) {

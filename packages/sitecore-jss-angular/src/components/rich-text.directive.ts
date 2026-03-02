@@ -1,47 +1,47 @@
 import {
   Directive,
-  Input,
+  InputSignal,
   OnChanges,
+  Renderer2,
   SimpleChanges,
   TemplateRef,
-  ViewContainerRef,
-  Renderer2,
   Type,
+  inject,
+  input,
 } from '@angular/core';
 import { Router } from '@angular/router';
+import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
 import { isAbsoluteUrl } from '@sitecore-jss/sitecore-jss/utils';
-import { RichTextField } from './rendering-field';
 import { BaseFieldDirective } from './base-field.directive';
 import { DefaultEmptyFieldEditingComponent } from './default-empty-text-field-editing-placeholder.component';
-import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
+import { RichTextField } from './rendering-field';
 
 @Directive({
   selector: '[scRichText]',
 })
 export class RichTextDirective extends BaseFieldDirective implements OnChanges {
-  @Input('scRichTextEditable') editable = true;
+  readonly editable = input(true, { alias: 'scRichTextEditable' });
 
-  @Input('scRichText') field: RichTextField;
+  readonly field: InputSignal<RichTextField | undefined> = input<RichTextField | undefined>(
+    undefined,
+    { alias: 'scRichText' }
+  );
 
   /**
    * Custom template to render in Pages in Metadata edit mode if field value is empty
    */
-  @Input('scRichTextEmptyFieldEditingTemplate') emptyFieldEditingTemplate: TemplateRef<unknown>;
+  readonly emptyFieldEditingTemplate = input<TemplateRef<unknown>>(undefined, {
+    alias: 'scRichTextEmptyFieldEditingTemplate',
+  });
 
   /**
    * Default component to render in Pages in Metadata edit mode if field value is empty and emptyFieldEditingTemplate is not provided
    */
-  protected defaultFieldEditingComponent: Type<unknown>;
+  protected defaultFieldEditingComponent: Type<unknown> = DefaultEmptyFieldEditingComponent;
 
-  constructor(
-    viewContainer: ViewContainerRef,
-    private templateRef: TemplateRef<unknown>,
-    private renderer: Renderer2,
-    private router: Router
-  ) {
-    super(viewContainer);
-    this.defaultFieldEditingComponent = DefaultEmptyFieldEditingComponent;
-  }
+  private readonly templateRef = inject<TemplateRef<unknown>>(TemplateRef);
+  private readonly renderer = inject(Renderer2);
+  private readonly router = inject(Router);
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.field || changes.editable) {
@@ -56,12 +56,12 @@ export class RichTextDirective extends BaseFieldDirective implements OnChanges {
       return;
     }
 
+    const field = this.field();
     this.renderMetadata(MetadataKind.Open);
     this.viewRef = this.viewContainer.createEmbeddedView(this.templateRef);
     this.renderMetadata(MetadataKind.Close);
 
-    const field = this.field;
-    const html = field.editable && this.editable ? field.editable : field.value;
+    const html = field.editable && this.editable() ? field.editable : field.value;
     this.viewRef.rootNodes.forEach((node) => {
       node.innerHTML = html;
 
