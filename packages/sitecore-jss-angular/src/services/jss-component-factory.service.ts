@@ -1,4 +1,14 @@
-import { createNgModule, inject, Injectable, Injector, NgModuleRef, Type } from '@angular/core';
+import {
+  createEnvironmentInjector,
+  createNgModule,
+  EnvironmentInjector,
+  EnvironmentProviders,
+  inject,
+  Injectable,
+  Injector,
+  NgModuleRef,
+  Type,
+} from '@angular/core';
 import { ComponentRendering, HtmlElementRendering } from '@sitecore-jss/sitecore-jss/layout';
 import { RawComponent } from '../components/raw.component';
 import { isRawRendering } from '../components/rendering';
@@ -18,12 +28,29 @@ export interface ComponentFactoryResult {
   componentImplementation?: Type<any>;
   componentDefinition: ComponentRendering | HtmlElementRendering;
   componentModuleRef?: NgModuleRef<unknown>;
+  componentInjector?: EnvironmentInjector;
   canActivate?:
     | JssCanActivate
     | Type<JssCanActivate>
     | JssCanActivateFn
     | Array<JssCanActivate | JssCanActivateFn | Type<JssCanActivate>>;
   resolve?: { [key: string]: JssResolve<any> | Type<JssResolve<any>> };
+}
+
+/**
+ * Checks whether a lazy load result is an NgModule type.
+ * @param {unknown} value The lazy load result.
+ */
+function isNgModule(value: unknown): value is Type<unknown> {
+  return typeof value === 'function' && Object.prototype.hasOwnProperty.call(value, 'ɵmod');
+}
+
+/**
+ * Checks whether a lazy load result contains Angular environment providers.
+ * @param {unknown} value The lazy load result.
+ */
+function isEnvironmentProviders(value: unknown): value is EnvironmentProviders {
+  return typeof value === 'object' && value !== null && 'ɵproviders' in value;
 }
 
 @Injectable()
@@ -33,6 +60,7 @@ export class JssComponentFactoryService {
   private components: ComponentNameAndType[];
   private lazyComponents: ComponentNameAndModule[];
   private injector = inject(Injector);
+  private environmentInjector = inject(EnvironmentInjector);
 
   constructor() {
     this.components = inject(PLACEHOLDER_COMPONENTS);
@@ -64,8 +92,21 @@ export class JssComponentFactoryService {
     if (lazyComponent) {
       return lazyComponent.loadChildren().then((lazyChild) => {
         let componentType = null;
-        const moduleRef = createNgModule(lazyChild, this.injector);
-        const dynamicComponentType = moduleRef.injector.get(DYNAMIC_COMPONENT);
+        let moduleRef: NgModuleRef<unknown> | undefined;
+        let componentInjector: EnvironmentInjector | undefined;
+        let dynamicComponentType: Type<unknown> | Record<string, Type<unknown>>;
+
+        if (isNgModule(lazyChild)) {
+          moduleRef = createNgModule(lazyChild, this.injector);
+          dynamicComponentType = moduleRef.injector.get(DYNAMIC_COMPONENT);
+        } else {
+          const providers = isEnvironmentProviders(lazyChild)
+            ? [lazyChild]
+            : [{ provide: DYNAMIC_COMPONENT, useValue: lazyChild }];
+          componentInjector = createEnvironmentInjector(providers, this.environmentInjector);
+          dynamicComponentType = componentInjector.get(DYNAMIC_COMPONENT);
+        }
+
         if (!dynamicComponentType) {
           throw new Error(
             `JssComponentFactoryService: Lazy load module for component "${lazyComponent.path}" missing DYNAMIC_COMPONENT provider. Missing JssModule.forChild()?`
@@ -89,6 +130,7 @@ export class JssComponentFactoryService {
           componentDefinition: this.applySXAParams(component),
           componentImplementation: componentType,
           componentModuleRef: moduleRef,
+          componentInjector,
           canActivate: lazyComponent.canActivate,
           resolve: lazyComponent.resolve,
         };

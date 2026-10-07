@@ -1,5 +1,13 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Injector, ModuleWithProviders, NgModule, Provider, Type } from '@angular/core';
+import {
+  EnvironmentProviders,
+  Injector,
+  makeEnvironmentProviders,
+  ModuleWithProviders,
+  NgModule,
+  Provider,
+  Type,
+} from '@angular/core';
 import { ActivatedRoute, Router, ROUTES } from '@angular/router';
 import { dataResolverFactory } from './services/data-resolver-factory';
 import { DateDirective } from './components/date.directive';
@@ -36,6 +44,83 @@ import { JssStateService } from './services/jss-state.service';
 import { EditingScriptsComponent } from './components/editing-scripts.component';
 import { FormComponent } from './components/form.component';
 
+export const JSS_DIRECTIVES: Type<unknown>[] = [
+  FileDirective,
+  ImageDirective,
+  DateDirective,
+  LinkDirective,
+  RouterLinkDirective,
+  GenericLinkDirective,
+  RenderEachDirective,
+  RenderEmptyDirective,
+  RenderComponentComponent,
+  PlaceholderComponent,
+  HiddenRenderingComponent,
+  PlaceholderLoadingDirective,
+  RichTextDirective,
+  TextDirective,
+  EditFrameComponent,
+  EditingScriptsComponent,
+  FormComponent,
+];
+
+/** Creates the providers shared by JssModule.forRoot() and provideJss(). */
+function getJssProviders(): Provider[] {
+  return [
+    DatePipe,
+    JssStateService,
+    JssComponentFactoryService,
+    {
+      provide: GUARD_RESOLVER,
+      useFactory: guardResolverFactory,
+      deps: [Injector, ActivatedRoute, Router],
+    },
+    {
+      provide: DATA_RESOLVER,
+      useFactory: dataResolverFactory,
+      deps: [Injector, ActivatedRoute, Router],
+    },
+  ];
+}
+
+/**
+ * Creates the component registration providers shared by both JSS APIs.
+ * @param {ComponentNameAndType[]} components The eager component registrations.
+ * @param {ComponentNameAndModule[]} [lazyComponents] The lazy component registrations.
+ */
+function getJssComponentProviders(
+  components: ComponentNameAndType[],
+  lazyComponents?: ComponentNameAndModule[]
+): Provider[] {
+  const registeredLazyComponents = lazyComponents || [];
+
+  return [
+    { provide: PLACEHOLDER_COMPONENTS, useValue: components },
+    { provide: PLACEHOLDER_LAZY_COMPONENTS, useValue: registeredLazyComponents },
+    { provide: ROUTES, useValue: registeredLazyComponents, multi: true },
+    { provide: PLACEHOLDER_MISSING_COMPONENT_COMPONENT, useValue: MissingComponentComponent },
+    { provide: PLACEHOLDER_HIDDEN_RENDERING_COMPONENT, useValue: HiddenRenderingComponent },
+    ...getJssProviders(),
+  ];
+}
+
+/** Provides the core JSS services in an environment injector. */
+export function provideJss(): EnvironmentProviders {
+  return makeEnvironmentProviders(getJssProviders());
+}
+
+/**
+ * Provides JSS services and registers eager and lazy components.
+ * @param {ComponentNameAndType[]} components The eager component registrations.
+ * @param {ComponentNameAndModule[]} [lazyComponents] The lazy component registrations.
+ */
+export function provideJssComponents(
+  components: ComponentNameAndType[],
+  lazyComponents?: ComponentNameAndModule[]
+): EnvironmentProviders {
+  return makeEnvironmentProviders(getJssComponentProviders(components, lazyComponents));
+}
+
 @NgModule({
   imports: [
     CommonModule,
@@ -60,25 +145,7 @@ import { FormComponent } from './components/form.component';
     FormComponent,
   ],
   declarations: [],
-  exports: [
-    FileDirective,
-    ImageDirective,
-    DateDirective,
-    LinkDirective,
-    RouterLinkDirective,
-    GenericLinkDirective,
-    RenderEachDirective,
-    RenderEmptyDirective,
-    RenderComponentComponent,
-    PlaceholderComponent,
-    HiddenRenderingComponent,
-    PlaceholderLoadingDirective,
-    RichTextDirective,
-    TextDirective,
-    EditFrameComponent,
-    EditingScriptsComponent,
-    FormComponent,
-  ],
+  exports: JSS_DIRECTIVES,
 })
 export class JssModule {
   /**
@@ -89,21 +156,7 @@ export class JssModule {
   static forRoot(): ModuleWithProviders<JssModule> {
     return {
       ngModule: JssModule,
-      providers: [
-        DatePipe,
-        JssStateService,
-        JssComponentFactoryService,
-        {
-          provide: GUARD_RESOLVER,
-          useFactory: guardResolverFactory,
-          deps: [Injector, ActivatedRoute, Router],
-        },
-        {
-          provide: DATA_RESOLVER,
-          useFactory: dataResolverFactory,
-          deps: [Injector, ActivatedRoute, Router],
-        },
-      ],
+      providers: getJssProviders(),
     };
   }
 
@@ -137,14 +190,7 @@ export class JssModule {
   ): ModuleWithProviders<JssModule> {
     return {
       ngModule: JssModule,
-      providers: [
-        { provide: PLACEHOLDER_COMPONENTS, useValue: components },
-        { provide: PLACEHOLDER_LAZY_COMPONENTS, useValue: lazyComponents || [] },
-        { provide: ROUTES, useValue: lazyComponents || [], multi: true },
-        { provide: PLACEHOLDER_MISSING_COMPONENT_COMPONENT, useValue: MissingComponentComponent },
-        { provide: PLACEHOLDER_HIDDEN_RENDERING_COMPONENT, useValue: HiddenRenderingComponent },
-        ...(JssModule.forRoot().providers as Provider[]),
-      ],
+      providers: getJssComponentProviders(components, lazyComponents),
     };
   }
 }
