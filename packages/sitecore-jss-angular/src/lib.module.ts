@@ -97,11 +97,34 @@ function getJssComponentProviders(
   return [
     { provide: PLACEHOLDER_COMPONENTS, useValue: components },
     { provide: PLACEHOLDER_LAZY_COMPONENTS, useValue: registeredLazyComponents },
-    { provide: ROUTES, useValue: registeredLazyComponents, multi: true },
     { provide: PLACEHOLDER_MISSING_COMPONENT_COMPONENT, useValue: MissingComponentComponent },
     { provide: PLACEHOLDER_HIDDEN_RENDERING_COMPONENT, useValue: HiddenRenderingComponent },
     ...getJssProviders(),
   ];
+}
+
+/**
+ * Checks whether a lazy-loaded value is an NgModule class.
+ * @param {unknown} value The lazy-loaded value to check.
+ */
+function isNgModule(value: unknown): value is Type<unknown> {
+  return typeof value === 'function' && Object.prototype.hasOwnProperty.call(value, 'ɵmod');
+}
+
+/**
+ * Creates router-only copies of the registered lazy entries.
+ * @param {ComponentNameAndModule[]} [lazyComponents] The entries to adapt for Angular Router.
+ */
+function getRouterLazyComponents(lazyComponents?: ComponentNameAndModule[]) {
+  return (lazyComponents || []).map((component) => ({
+    ...component,
+    loadChildren: (): Promise<Type<unknown> | unknown[]> =>
+      component
+        .loadChildren()
+        .then((loadedComponent): Type<unknown> | unknown[] =>
+          isNgModule(loadedComponent) ? loadedComponent : []
+        ),
+  }));
 }
 
 /** Provides the core JSS services in an environment injector. */
@@ -190,7 +213,10 @@ export class JssModule {
   ): ModuleWithProviders<JssModule> {
     return {
       ngModule: JssModule,
-      providers: getJssComponentProviders(components, lazyComponents),
+      providers: [
+        ...getJssComponentProviders(components, lazyComponents),
+        { provide: ROUTES, useValue: getRouterLazyComponents(lazyComponents), multi: true },
+      ],
     };
   }
 }

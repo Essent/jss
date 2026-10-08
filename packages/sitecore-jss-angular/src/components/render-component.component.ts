@@ -5,6 +5,7 @@ import {
   KeyValueDiffer,
   KeyValueDiffers,
   OnChanges,
+  OnDestroy,
   SimpleChanges,
   Type,
   ViewContainerRef,
@@ -24,6 +25,28 @@ import { RawComponent } from './raw.component';
 import { isRawRendering } from './rendering';
 
 /**
+ * Destroys the injector that provides a lazily loaded standalone component.
+ * @param {ComponentFactoryResult['componentInjector']} componentInjector The injector to destroy, if created.
+ */
+function destroyComponentInjector(componentInjector?: ComponentFactoryResult['componentInjector']) {
+  if (componentInjector && !componentInjector.destroyed) {
+    componentInjector.destroy();
+  }
+}
+
+/**
+ * Destroys an injector without replacing the error that caused cleanup.
+ * @param {ComponentFactoryResult} factory The factory result that owns the injector.
+ */
+function destroyComponentInjectorAfterError(factory: ComponentFactoryResult) {
+  try {
+    destroyComponentInjector(factory.componentInjector);
+  } catch {
+    // Preserve the error that caused the injector cleanup.
+  }
+}
+
+/**
  * Renders a single JSS component given a rendering definition.
  * Useful inside templated placeholders.
  */
@@ -33,7 +56,7 @@ import { isRawRendering } from './rendering';
     <ng-template #view></ng-template>
   `,
 })
-export class RenderComponentComponent implements OnChanges {
+export class RenderComponentComponent implements OnChanges, OnDestroy {
   readonly rendering = input<ComponentRendering | HtmlElementRendering>();
   readonly outputs = input<{
     [k: string]: (eventType: unknown) => void;
@@ -66,6 +89,10 @@ export class RenderComponentComponent implements OnChanges {
     }
   }
 
+  ngOnDestroy() {
+    this.destroyed = true;
+  }
+
   private _setComponentInputs(
     componentRef: ComponentRef<unknown>,
     inputs: { [key: string]: unknown }
@@ -90,13 +117,13 @@ export class RenderComponentComponent implements OnChanges {
       );
   }
 
-  private _render() {
+  private _render(): Promise<void> {
     const view = this.view();
     view.clear();
 
     const renderingValue = this.rendering();
     if (!renderingValue) {
-      return;
+      return Promise.resolve();
     }
 
     const resolveComponent: Promise<ComponentFactoryResult> = isRawRendering(renderingValue)
@@ -106,7 +133,12 @@ export class RenderComponentComponent implements OnChanges {
         })
       : this.componentFactory.getComponent(renderingValue);
 
-    resolveComponent.then((rendering) => {
+    return resolveComponent.then((rendering) => {
+      if (this.destroyed) {
+        destroyComponentInjectorAfterError(rendering);
+        return;
+      }
+
       if (!rendering.componentImplementation) {
         const componentName = (rendering.componentDefinition as ComponentRendering).componentName;
         console.error(
@@ -120,14 +152,36 @@ export class RenderComponentComponent implements OnChanges {
         rendering.componentImplementation = this.missingComponentComponent;
       }
 
-      const componentRef = view.createComponent(rendering.componentImplementation);
-      componentRef.setInput('rendering', rendering.componentDefinition);
-      if (this._inputs) {
-        this._setComponentInputs(componentRef, this._inputs);
-      }
-      const outputs = this.outputs();
-      if (outputs) {
-        this._subscribeComponentOutputs(componentRef.instance, outputs);
+      let componentRef: ComponentRef<unknown> | undefined;
+      try {
+        componentRef = rendering.componentInjector
+          ? view.createComponent(rendering.componentImplementation, {
+              environmentInjector: rendering.componentInjector,
+            })
+          : view.createComponent(rendering.componentImplementation);
+        componentRef.onDestroy(() => destroyComponentInjector(rendering.componentInjector));
+        componentRef.setInput('rendering', rendering.componentDefinition);
+        if (this._inputs) {
+          this._setComponentInputs(componentRef, this._inputs);
+        }
+        const outputs = this.outputs();
+        if (outputs) {
+          this._subscribeComponentOutputs(
+            componentRef.instance as { [key: string]: unknown },
+            outputs
+          );
+        }
+      } catch (error) {
+        if (componentRef) {
+          try {
+            componentRef.destroy();
+          } catch {
+            // Preserve the component creation or setup error.
+          }
+        } else {
+          destroyComponentInjectorAfterError(rendering);
+        }
+        throw error;
       }
     });
   }

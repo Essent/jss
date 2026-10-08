@@ -13,7 +13,11 @@ import { ROUTES } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ComponentRendering } from '@sitecore-jss/sitecore-jss/layout';
 import { JSS_DIRECTIVES, JssModule, provideJss, provideJssComponents } from './lib.module';
-import { ComponentNameAndModule, DYNAMIC_COMPONENT } from './services/placeholder.token';
+import {
+  ComponentNameAndModule,
+  DYNAMIC_COMPONENT,
+  PLACEHOLDER_LAZY_COMPONENTS,
+} from './services/placeholder.token';
 
 const LAZY_COMPONENT_MESSAGE = new InjectionToken<string>('LAZY_COMPONENT_MESSAGE');
 
@@ -80,9 +84,10 @@ describe('JSS standalone provider API', () => {
       });
     });
 
-    it('registers the lazy entries as router routes', () => {
-      const routes = TestBed.inject(ROUTES) as unknown[];
-      expect(routes).toContain(lazyComponents);
+    it('keeps lazy entries for placeholders without registering them as routes', () => {
+      const routes = (TestBed.inject(ROUTES) as unknown[][]).flat() as Array<{ path?: string }>;
+      expect(TestBed.inject(PLACEHOLDER_LAZY_COMPONENTS)).toBe(lazyComponents);
+      expect(routes.some((route) => route?.path === 'StandaloneDirect')).toBeFalse();
     });
 
     [
