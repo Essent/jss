@@ -1,0 +1,29 @@
+packages/sitecore-jss-angular/src/component-injector-lifecycle.spec.ts
+  s_7e1e1d8f76ab3e::t_410a9f645907f9 1-404
+packages/sitecore-jss-angular/src/components/placeholder.component.ts
+  s_7e1e1d8f76ab3e::t_233cf306ec9b16 64-87,375-376,378-379,381-385,387-392,403-407,410,425-427,489-493,495-501,504-533
+packages/sitecore-jss-angular/src/components/render-component.component.ts
+  s_7e1e1d8f76ab3e::t_8d8a51a548b77e 8,27-48,59,92-95,120,126,136-141,155-184
+packages/sitecore-jss-angular/src/lib.module.ts
+  s_7e1e1d8f76ab3e::t_5d364c082ea9ba 106-129,216-219
+packages/sitecore-jss-angular/src/services/jss-component-factory.service.ts
+  s_7e1e1d8f76ab3e::t_22fbb3714b7f3b 56-77,116,119-120,122-131,133-143,151-168,181-182,186-210
+packages/sitecore-jss-angular/src/standalone-provider-api.spec.ts
+  s_7e1e1d8f76ab3e::t_fd47c283e29016 16-20,87-90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e86627bf78d902a4f48c9b4aff3856984401bf04",
+  "prompts": {},
+  "sessions": {
+    "s_7e1e1d8f76ab3e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ee4975108ffeOGw8Pa4Yzvxebo",
+        "model": "unknown"
+      },
+      "human_author": "Mark van Lagen <mark@markvlagen.nl>"
+    }
+  }
+}
