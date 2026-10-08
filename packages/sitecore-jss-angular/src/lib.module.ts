@@ -44,7 +44,7 @@ import { JssStateService } from './services/jss-state.service';
 import { EditingScriptsComponent } from './components/editing-scripts.component';
 import { FormComponent } from './components/form.component';
 
-export const JSS_DIRECTIVES: Type<unknown>[] = [
+export const JSS_DIRECTIVES = [
   FileDirective,
   ImageDirective,
   DateDirective,
@@ -62,7 +62,7 @@ export const JSS_DIRECTIVES: Type<unknown>[] = [
   EditFrameComponent,
   EditingScriptsComponent,
   FormComponent,
-];
+] as const;
 
 /** Creates the providers shared by JssModule.forRoot() and provideJss(). */
 function getJssProviders(): Provider[] {
@@ -168,7 +168,7 @@ export function provideJssComponents(
     FormComponent,
   ],
   declarations: [],
-  exports: JSS_DIRECTIVES,
+  exports: [(JSS_DIRECTIVES as unknown) as Type<unknown>[]],
 })
 export class JssModule {
   /**

@@ -50,7 +50,7 @@ class ThrowingComponent {
 
 @Component({
   standalone: true,
-  imports: JSS_DIRECTIVES,
+  imports: [JSS_DIRECTIVES],
   template: '<sc-placeholder name="main" [rendering]="rendering"></sc-placeholder>',
 })
 class PlaceholderHostComponent {
@@ -59,7 +59,7 @@ class PlaceholderHostComponent {
 
 @Component({
   standalone: true,
-  imports: JSS_DIRECTIVES,
+  imports: [JSS_DIRECTIVES],
   template: `
     <sc-placeholder name="main" [rendering]="rendering">
       <ng-template renderEach let-rendering="rendering">
@@ -143,7 +143,25 @@ describe('per-render component injector cleanup', () => {
       TestBed.inject(JssComponentFactoryService).getComponent({
         componentName: 'Lazy',
       } as ComponentRendering)
-    ).toBeRejected();
+    ).toBeRejectedWithError(/Lazy providers for component "Lazy" do not provide DYNAMIC_COMPONENT/);
+    expect(destroySpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not use a parent DYNAMIC_COMPONENT provider', async () => {
+    const destroySpy = jasmine.createSpy('destroy');
+    const lazyComponents = [lazyComponent('Lazy', async () => makeTrackedProviders(destroySpy))];
+    await TestBed.configureTestingModule({
+      providers: [
+        provideJssComponents([], lazyComponents),
+        { provide: DYNAMIC_COMPONENT, useValue: TrackingComponent },
+      ],
+    }).compileComponents();
+
+    await expectAsync(
+      TestBed.inject(JssComponentFactoryService).getComponent({
+        componentName: 'Lazy',
+      } as ComponentRendering)
+    ).toBeRejectedWithError(/Lazy providers for component "Lazy" do not provide DYNAMIC_COMPONENT/);
     expect(destroySpy).toHaveBeenCalledTimes(1);
   });
 
@@ -162,7 +180,7 @@ describe('per-render component injector cleanup', () => {
       TestBed.inject(JssComponentFactoryService).getComponent({
         componentName: 'Lazy',
       } as ComponentRendering)
-    ).toBeRejected();
+    ).toBeRejectedWithError(/component map does not contain "Lazy"/);
     expect(destroySpy).toHaveBeenCalledTimes(1);
   });
 
@@ -181,7 +199,7 @@ describe('per-render component injector cleanup', () => {
       TestBed.inject(JssComponentFactoryService).getComponent({
         componentName: 'Lazy',
       } as ComponentRendering)
-    ).toBeRejected();
+    ).toBeRejectedWithError(/component map entry for "Lazy" is not a component type/);
     expect(destroySpy).toHaveBeenCalledTimes(1);
   });
 

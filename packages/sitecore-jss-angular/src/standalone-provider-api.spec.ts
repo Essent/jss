@@ -37,7 +37,7 @@ class TestLazyNgModule {}
 
 @Component({
   standalone: true,
-  imports: JSS_DIRECTIVES,
+  imports: [JSS_DIRECTIVES],
   template:
     '<sc-placeholder name="main" [rendering]="rendering" [inputs]="inputs"></sc-placeholder>',
 })

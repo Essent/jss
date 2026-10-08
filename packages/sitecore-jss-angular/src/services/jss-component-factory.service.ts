@@ -117,7 +117,7 @@ export class JssComponentFactoryService {
         let moduleRef: NgModuleRef<unknown> | undefined;
         let componentInjector: EnvironmentInjector | undefined;
         try {
-          let dynamicComponentType: Type<unknown> | Record<string, Type<unknown>>;
+          let dynamicComponentType: Type<unknown> | Record<string, Type<unknown>> | null;
 
           if (isNgModule(lazyChild)) {
             moduleRef = createNgModule(lazyChild, this.injector);
@@ -127,10 +127,15 @@ export class JssComponentFactoryService {
               ? [lazyChild]
               : [{ provide: DYNAMIC_COMPONENT, useValue: lazyChild }];
             componentInjector = createEnvironmentInjector(providers, this.environmentInjector);
-            dynamicComponentType = componentInjector.get(DYNAMIC_COMPONENT);
+            dynamicComponentType = componentInjector.get(DYNAMIC_COMPONENT, null, { self: true });
           }
 
           if (!dynamicComponentType) {
+            if (componentInjector) {
+              throw new Error(
+                `JssComponentFactoryService: Lazy providers for component "${component.componentName}" do not provide DYNAMIC_COMPONENT.`
+              );
+            }
             throw new Error(
               `JssComponentFactoryService: Lazy load module for component "${lazyComponent.path}" missing DYNAMIC_COMPONENT provider. Missing JssModule.forChild()?`
             );
@@ -143,6 +148,11 @@ export class JssComponentFactoryService {
           } else if (typeof dynamicComponentType === 'function') {
             componentType = dynamicComponentType;
           } else {
+            if (componentInjector) {
+              throw new Error(
+                `JssComponentFactoryService: DYNAMIC_COMPONENT component map does not contain "${component.componentName}" for lazy component "${lazyComponent.path}".`
+              );
+            }
             throw new Error(
               `JssComponentFactoryService: Lazy load module for component "${lazyComponent.path}" missing DYNAMIC_COMPONENT provider. Missing JssModule.forChild()?`
             );
@@ -150,7 +160,7 @@ export class JssComponentFactoryService {
 
           if (componentInjector && typeof componentType !== 'function') {
             throw new Error(
-              `JssComponentFactoryService: Lazy load module for component "${lazyComponent.path}" missing DYNAMIC_COMPONENT provider. Missing JssModule.forChild()?`
+              `JssComponentFactoryService: DYNAMIC_COMPONENT component map entry for "${component.componentName}" is not a component type.`
             );
           }
 

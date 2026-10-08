@@ -6,6 +6,7 @@
     "build": "ng-packagr -p ng-package.json",
     "lint": "eslint \"./src/**/*.ts\"",
     "test": "ng test",
+    "test:aot-consumer": "ngc -p aot-consumer/tsconfig.json",
     "test:watch": "ng test --watch --browsers Chrome",
     "coverage": "ng test --code-coverage",
     "generate-docs": "npx typedoc --plugin typedoc-plugin-markdown --outputFileStrategy Members --parametersFormat table --readme none --out ../../ref-docs/sitecore-jss-angular src/public_api.ts --githubPages false"
