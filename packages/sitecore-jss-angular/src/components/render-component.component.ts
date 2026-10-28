@@ -6,6 +6,7 @@ import {
   KeyValueDiffers,
   OnChanges,
   OnDestroy,
+  OutputRef,
   SimpleChanges,
   Type,
   ViewContainerRef,
@@ -71,8 +72,8 @@ export class RenderComponentComponent implements OnChanges, OnDestroy {
     }>
   >(PLACEHOLDER_MISSING_COMPONENT_COMPONENT);
 
-  private _inputs: { [key: string]: unknown };
-  private _differ: KeyValueDiffer<string, unknown>;
+  private _inputs?: { [key: string]: unknown };
+  private _differ?: KeyValueDiffer<string, unknown>;
   private destroyed = false;
 
   @Input()
@@ -106,15 +107,23 @@ export class RenderComponentComponent implements OnChanges, OnDestroy {
     componentInstance: { [key: string]: unknown },
     outputs: { [k: string]: (eventType: unknown) => void }
   ) {
-    Object.keys(outputs)
-      .filter(
-        (output) => componentInstance[output] && componentInstance[output] instanceof Observable
-      )
-      .forEach((output) =>
-        (componentInstance[output] as Observable<unknown>)
-          .pipe(takeWhile(() => !this.destroyed))
-          .subscribe(outputs[output])
-      );
+    Object.keys(outputs).forEach((output) => {
+      const outputSource = componentInstance[output];
+      if (outputSource instanceof Observable) {
+        outputSource.pipe(takeWhile(() => !this.destroyed)).subscribe(outputs[output]);
+      } else if (
+        outputSource &&
+        typeof outputSource === 'object' &&
+        'subscribe' in outputSource &&
+        typeof outputSource.subscribe === 'function'
+      ) {
+        (outputSource as OutputRef<unknown>).subscribe((value) => {
+          if (!this.destroyed) {
+            outputs[output](value);
+          }
+        });
+      }
+    });
   }
 
   private _render(): Promise<void> {

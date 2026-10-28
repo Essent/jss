@@ -8,7 +8,7 @@ import {
   InputSignal,
 } from '@angular/core';
 import { RenderingField } from './rendering-field';
-import { GenericFieldValue, isFieldValueEmpty } from '@sitecore-jss/sitecore-jss/layout';
+import { isFieldValueEmpty } from '@sitecore-jss/sitecore-jss/layout';
 import { FieldMetadataMarkerComponent } from './field-metadata-marker.component';
 import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
 
@@ -16,11 +16,11 @@ import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
  * Base class that contains common functionality for the field directives.
  */
 @Directive()
-export abstract class BaseFieldDirective {
+export abstract class BaseFieldDirective<TField extends RenderingField<any> = RenderingField<any>> {
   protected viewRef?: EmbeddedViewRef<unknown>;
   protected readonly viewContainer: ViewContainerRef = inject(ViewContainerRef);
 
-  protected abstract field: InputSignal<RenderingField<any> | undefined>;
+  protected abstract field: InputSignal<TField | undefined>;
   protected abstract editable: InputSignal<boolean>;
   /**
    * Custom template to render in Pages in Metadata edit mode if field value is empty
@@ -37,7 +37,7 @@ export abstract class BaseFieldDirective {
    */
   protected shouldRender() {
     const field = this.field();
-    return !!field?.editable || !isFieldValueEmpty(field);
+    return !!field && (!!field.editable || !isFieldValueEmpty(field));
   }
 
   /**

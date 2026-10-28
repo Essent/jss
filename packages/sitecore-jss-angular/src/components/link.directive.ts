@@ -16,7 +16,7 @@ import { DefaultEmptyFieldEditingComponent } from './default-empty-text-field-ed
 import { LinkField } from './rendering-field';
 
 @Directive({ selector: '[scLink]' })
-export class LinkDirective extends BaseFieldDirective implements OnChanges {
+export class LinkDirective extends BaseFieldDirective<LinkField> implements OnChanges {
   readonly editable = input(true, { alias: 'scLinkEditable' });
 
   readonly attrs = input<{
@@ -110,7 +110,7 @@ export class LinkDirective extends BaseFieldDirective implements OnChanges {
     if (this.editable() && field && field.editableFirstPart && field.editableLastPart) {
       this.renderInlineWrapper(field.editableFirstPart, field.editableLastPart);
     } else {
-      if (!this.shouldRender()) {
+      if (!field || !this.shouldRender()) {
         super.renderEmpty();
         return;
       }

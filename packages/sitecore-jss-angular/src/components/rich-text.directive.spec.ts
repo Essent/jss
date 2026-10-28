@@ -7,15 +7,18 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { richTextField as eeRichTextData } from '../test-data/ee-data';
 import { RichTextField } from './rendering-field';
 import { RichTextDirective } from './rich-text.directive';
+import { JSS_DIRECTIVES } from '../lib.module';
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-rich-text',
   template: `
     <h1 *scRichText="field(); editable: editable()"></h1>
   `,
 })
 class TestComponent {
-  readonly field = input<RichTextField>(undefined);
+  readonly field = input<RichTextField | undefined>(undefined);
   readonly editable = input(true);
 }
 
@@ -24,12 +27,14 @@ const emptyTextFieldEditingTemplate =
   '<span>[This is a *custom* empty field component for text]</span>';
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-empty-template-rich-text',
   template: `
     <h1
       *scRichText="
-        field;
-        editable: editable;
+        field();
+        editable: editable();
         emptyFieldEditingTemplate: ${emptyTextFieldEditingTemplateId}
       "
     ></h1>
@@ -47,19 +52,22 @@ class TestEmptyTemplateComponent {
 describe('<div *scRichText />', () => {
   let fixture: ComponentFixture<TestComponent>;
   let de: DebugElement;
-  let comp: TestComponent;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [RichTextDirective, TestComponent, TestEmptyTemplateComponent],
-      imports: [RouterTestingModule.withRoutes([{ path: 'lorem', component: TestComponent }])],
+      declarations: [],
+      imports: [
+        RouterTestingModule.withRoutes([{ path: 'lorem', component: TestComponent }]),
+        RichTextDirective,
+        TestComponent,
+        TestEmptyTemplateComponent,
+      ],
     });
 
     fixture = TestBed.createComponent(TestComponent);
     fixture.detectChanges();
 
     de = fixture.debugElement;
-    comp = fixture.componentInstance;
   });
 
   it('should render nothing with missing field', () => {
@@ -68,7 +76,7 @@ describe('<div *scRichText />', () => {
   });
 
   it('should render nothing with missing editable and value', () => {
-    comp.field = {};
+    fixture.componentRef.setInput('field', {});
     fixture.detectChanges();
 
     const deh1 = de.query(By.css('h1'));
@@ -80,7 +88,7 @@ describe('<div *scRichText />', () => {
       value: 'value',
       editable: 'editable',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('h1')).nativeElement.innerHTML;
@@ -92,8 +100,8 @@ describe('<div *scRichText />', () => {
       value: '<a href="www.example.com">Hello World</a>',
       editable: 'editable',
     };
-    comp.field = field;
-    comp.editable = false;
+    fixture.componentRef.setInput('field', field);
+    fixture.componentRef.setInput('editable', false);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('h1')).nativeElement.innerHTML;
@@ -104,7 +112,7 @@ describe('<div *scRichText />', () => {
     const field: { [prop: string]: unknown } = {
       value: 'value',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('h1')).nativeElement.innerHTML;
@@ -115,7 +123,7 @@ describe('<div *scRichText />', () => {
     const field: { [prop: string]: unknown } = {
       value: '<input type="text">some crazy stuff<script code="whaaaat">uh oh</script>',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('h1')).nativeElement.innerHTML;
@@ -126,7 +134,7 @@ describe('<div *scRichText />', () => {
     const field = {
       value: '<a href="/lorem">Click Me!</a>',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
     const router: Router = TestBed.inject(Router);
     spyOn(router, 'navigateByUrl');
@@ -142,7 +150,7 @@ describe('<div *scRichText />', () => {
     const field = {
       editable: eeRichTextData,
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('h1')).nativeElement.innerHTML;
@@ -168,7 +176,7 @@ describe('<div *scRichText />', () => {
         value: '',
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -182,13 +190,12 @@ describe('<div *scRichText />', () => {
       fixture.detectChanges();
 
       de = fixture.debugElement;
-      comp = fixture.componentInstance;
 
       const field = {
         value: '',
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -200,8 +207,8 @@ describe('<div *scRichText />', () => {
         value: '',
         metadata: testMetadata,
       };
-      comp.field = field;
-      comp.editable = false;
+      fixture.componentRef.setInput('field', field);
+      fixture.componentRef.setInput('editable', false);
       fixture.detectChanges();
 
       const deh1 = de.query(By.css('h1'));
@@ -215,8 +222,8 @@ describe('<div *scRichText />', () => {
             metadata: { foo: 'bar' },
             value: 'foo',
           };
-          comp.editable = true;
-          comp.field = field;
+          fixture.componentRef.setInput('editable', true);
+          fixture.componentRef.setInput('field', field);
           fixture.detectChanges();
 
           const fieldValue = de.query(By.css('h1'));
@@ -236,8 +243,8 @@ describe('<div *scRichText />', () => {
             metadata: { foo: 'bar' },
             value: '',
           };
-          comp.editable = true;
-          comp.field = field;
+          fixture.componentRef.setInput('editable', true);
+          fixture.componentRef.setInput('field', field);
           fixture.detectChanges();
 
           const fieldValue = de.query(
@@ -261,8 +268,8 @@ describe('<div *scRichText />', () => {
             metadata: { foo: 'bar' },
             value: 'foo',
           };
-          comp.editable = false;
-          comp.field = field;
+          fixture.componentRef.setInput('editable', false);
+          fixture.componentRef.setInput('field', field);
           fixture.detectChanges();
 
           const fieldValue = de.query(By.css('h1'));
@@ -280,8 +287,8 @@ describe('<div *scRichText />', () => {
         const field = {
           value: 'foo ',
         };
-        comp.editable = true;
-        comp.field = field;
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('field', field);
         fixture.detectChanges();
 
         const fieldValue = de.query(By.css('h1'));

@@ -37,6 +37,10 @@ export interface ComponentFactoryResult {
   resolve?: { [key: string]: JssResolve<any> | Type<JssResolve<any>> };
 }
 
+type SettledComponentFactoryResult =
+  | { status: 'fulfilled'; value: ComponentFactoryResult }
+  | { status: 'rejected'; reason: unknown };
+
 /**
  * Checks whether a lazy load result is an NgModule type.
  * @param {unknown} value The lazy load result.
@@ -195,16 +199,20 @@ export class JssComponentFactoryService {
     );
     let rejected = false;
     let originalError: unknown;
-    componentPromises.forEach((promise) => {
-      promise.catch((error: unknown) => {
-        if (!rejected) {
-          rejected = true;
-          originalError = error;
+    const settledComponentPromises = componentPromises.map((promise) =>
+      promise.then(
+        (value): SettledComponentFactoryResult => ({ status: 'fulfilled', value }),
+        (error: unknown): SettledComponentFactoryResult => {
+          if (!rejected) {
+            rejected = true;
+            originalError = error;
+          }
+          return { status: 'rejected', reason: error };
         }
-      });
-    });
+      )
+    );
 
-    return Promise.allSettled(componentPromises).then((results) => {
+    return Promise.all(settledComponentPromises).then((results) => {
       if (rejected) {
         results.forEach((result) => {
           if (result.status === 'fulfilled') {
@@ -214,9 +222,12 @@ export class JssComponentFactoryService {
         throw originalError;
       }
 
-      return results.map(
-        (result) => (result as PromiseFulfilledResult<ComponentFactoryResult>).value
-      );
+      return results.map((result) => {
+        if (result.status === 'fulfilled') {
+          return result.value;
+        }
+        throw result.reason;
+      });
     });
   }
 

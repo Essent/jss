@@ -5,15 +5,18 @@ import { By } from '@angular/platform-browser';
 import { generalLinkField as eeLinkData } from '../test-data/ee-data';
 import { LinkDirective } from './link.directive';
 import { LinkField } from './rendering-field';
+import { JSS_DIRECTIVES } from '../lib.module';
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-link',
   template: `
     <a *scLink="field(); editable: editable(); attrs: attrs()" id="my-link"></a>
   `,
 })
 class TestComponent {
-  readonly field = input<LinkField>(undefined);
+  readonly field = input<LinkField | undefined>(undefined);
   readonly editable = input(true);
   readonly attrs = input({});
 }
@@ -24,12 +27,14 @@ const emptyLinkFieldEditingTemplateDefaultTestString =
   '<span sc-default-empty-text-field-editing-placeholder="">[No text in field]</span>';
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-empty-template-link',
   template: `
     <a
       *scLink="
-        field;
-        editable: editable;
+        field();
+        editable: editable();
         emptyFieldEditingTemplate: ${emptyLinkFieldEditingTemplateId}
       "
     ></a>
@@ -48,17 +53,16 @@ class TestEmptyTemplateComponent {
 describe('<a *scLink />', () => {
   let fixture: ComponentFixture<TestComponent>;
   let de: DebugElement;
-  let comp: TestComponent;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [LinkDirective, TestComponent, TestEmptyTemplateComponent],
+      declarations: [],
+      imports: [LinkDirective, TestComponent, TestEmptyTemplateComponent],
     });
 
     fixture = TestBed.createComponent(TestComponent);
     de = fixture.debugElement;
 
-    comp = fixture.componentInstance;
     fixture.detectChanges();
   });
 
@@ -68,7 +72,7 @@ describe('<a *scLink />', () => {
 
   it('should render nothing with missing editable and value', () => {
     const field = {};
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     expect(de.children.length).toBe(0);
@@ -78,7 +82,7 @@ describe('<a *scLink />', () => {
     const field = {
       value: { href: '' },
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     expect(de.children.length).toBe(0);
@@ -89,7 +93,7 @@ describe('<a *scLink />', () => {
       editableFirstPart: '<a class="yo" href="/services">Lorem',
       editableLastPart: '</a>',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
     expect(de.nativeElement.querySelector('span').innerHTML).toContain(field.editableFirstPart);
   });
@@ -102,8 +106,8 @@ describe('<a *scLink />', () => {
       },
       editable: '<a href="/services" class="yo">Lorem</a>',
     };
-    comp.field = field;
-    comp.editable = false;
+    fixture.componentRef.setInput('field', field);
+    fixture.componentRef.setInput('editable', false);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('a'));
@@ -116,7 +120,7 @@ describe('<a *scLink />', () => {
       href: '/lorem',
       text: 'ipsum',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('a'));
@@ -129,7 +133,7 @@ describe('<a *scLink />', () => {
       editableFirstPart: eeLinkData,
       editableLastPart: '</a>',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.nativeElement.querySelector('span');
@@ -149,7 +153,7 @@ describe('<a *scLink />', () => {
         target: '_blank',
       },
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('a'));
@@ -164,7 +168,7 @@ describe('<a *scLink />', () => {
       editableFirstPart: '<a href="/services" class="yo">Lorem',
       editableLastPart: '</a>',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.nativeElement.querySelector('span');
@@ -176,8 +180,8 @@ describe('<a *scLink />', () => {
       editableFirstPart: '<a href="/services" class="yo">Lorem',
       editableLastPart: '</a>',
     };
-    comp.field = field;
-    comp.attrs = { title: 'footip' };
+    fixture.componentRef.setInput('field', field);
+    fixture.componentRef.setInput('attrs', { title: 'footip' });
     fixture.detectChanges();
 
     const rendered = de.nativeElement.querySelector('span');
@@ -194,8 +198,8 @@ describe('<a *scLink />', () => {
         target: '_blank',
       },
     };
-    comp.field = field;
-    comp.attrs = { title: 'footip' };
+    fixture.componentRef.setInput('field', field);
+    fixture.componentRef.setInput('attrs', { title: 'footip' });
     fixture.detectChanges();
 
     const rendered = de.query(By.css('a'));
@@ -211,8 +215,8 @@ describe('<a *scLink />', () => {
         },
         text: 'ipsum',
       };
-      comp.editable = false;
-      comp.field = field;
+      fixture.componentRef.setInput('editable', false);
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.query(By.css('a'));
@@ -228,8 +232,8 @@ describe('<a *scLink />', () => {
         },
         text: 'ipsum',
       };
-      comp.editable = false;
-      comp.field = field;
+      fixture.componentRef.setInput('editable', false);
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.query(By.css('a'));
@@ -245,8 +249,8 @@ describe('<a *scLink />', () => {
         },
         text: 'ipsum',
       };
-      comp.editable = false;
-      comp.field = field;
+      fixture.componentRef.setInput('editable', false);
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.query(By.css('a'));
@@ -274,7 +278,7 @@ describe('<a *scLink />', () => {
         value: { src: undefined },
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -286,7 +290,7 @@ describe('<a *scLink />', () => {
         hred: undefined,
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -298,13 +302,12 @@ describe('<a *scLink />', () => {
       fixture.detectChanges();
 
       de = fixture.debugElement;
-      comp = fixture.componentInstance;
 
       const field = {
         value: { href: undefined },
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -316,13 +319,12 @@ describe('<a *scLink />', () => {
       fixture.detectChanges();
 
       de = fixture.debugElement;
-      comp = fixture.componentInstance;
 
       const field = {
         href: undefined,
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -334,8 +336,8 @@ describe('<a *scLink />', () => {
         value: { href: undefined },
         metadata: testMetadata,
       };
-      comp.field = field;
-      comp.editable = false;
+      fixture.componentRef.setInput('field', field);
+      fixture.componentRef.setInput('editable', false);
       fixture.detectChanges();
       expect(de.children.length).toBe(0);
     });
@@ -345,8 +347,8 @@ describe('<a *scLink />', () => {
         href: undefined,
         metadata: testMetadata,
       };
-      comp.field = field;
-      comp.editable = false;
+      fixture.componentRef.setInput('field', field);
+      fixture.componentRef.setInput('editable', false);
       fixture.detectChanges();
       expect(de.children.length).toBe(0);
     });
@@ -364,8 +366,8 @@ describe('<a *scLink />', () => {
               target: '_blank',
             },
           };
-          comp.editable = true;
-          comp.field = linkField;
+          fixture.componentRef.setInput('editable', true);
+          fixture.componentRef.setInput('field', linkField);
           fixture.detectChanges();
 
           const link = de.query(By.css('a')).nativeElement as HTMLElement;
@@ -386,8 +388,8 @@ describe('<a *scLink />', () => {
             metadata: { foo: 'bar' },
             value: { src: undefined },
           };
-          comp.editable = true;
-          comp.field = field;
+          fixture.componentRef.setInput('editable', true);
+          fixture.componentRef.setInput('field', field);
           fixture.detectChanges();
 
           const fieldValue = de.query(
@@ -417,8 +419,8 @@ describe('<a *scLink />', () => {
               target: '_blank',
             },
           };
-          comp.editable = false;
-          comp.field = linkField;
+          fixture.componentRef.setInput('editable', false);
+          fixture.componentRef.setInput('field', linkField);
           fixture.detectChanges();
 
           const link = de.query(By.css('a')).nativeElement as HTMLElement;
@@ -443,8 +445,8 @@ describe('<a *scLink />', () => {
             target: '_blank',
           },
         };
-        comp.editable = true;
-        comp.field = linkField;
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('field', linkField);
         fixture.detectChanges();
 
         const link = de.query(By.css('a')).nativeElement as HTMLElement;
@@ -460,6 +462,8 @@ describe('<a *scLink />', () => {
 });
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-link-children',
   template: `
     <a *scLink="field(); editable: editable(); attrs: attrs()" id="my-link"
@@ -476,13 +480,15 @@ class TestWithChildrenComponent {
 }
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-empty-template-link',
   template: `
     <a
       *scLink="
-        field;
-        editable: editable;
-        attrs: attrs;
+        field();
+        editable: editable();
+        attrs: attrs();
         emptyFieldEditingTemplate: ${emptyLinkFieldEditingTemplateId}
       "
       id="my-link"
@@ -503,21 +509,16 @@ class TestEmptyTemplateWithChildrenComponent {
 describe('<a *scLink>children</a>', () => {
   let fixture: ComponentFixture<TestComponent>;
   let de: DebugElement;
-  let comp: TestComponent;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [
-        LinkDirective,
-        TestWithChildrenComponent,
-        TestEmptyTemplateWithChildrenComponent,
-      ],
+      declarations: [],
+      imports: [LinkDirective, TestWithChildrenComponent, TestEmptyTemplateWithChildrenComponent],
     });
 
     fixture = TestBed.createComponent(TestWithChildrenComponent);
     de = fixture.debugElement;
 
-    comp = fixture.componentInstance;
     fixture.detectChanges();
   });
 
@@ -526,7 +527,7 @@ describe('<a *scLink>children</a>', () => {
       editableFirstPart: '<a class="yo" href="/services">Lorem',
       editableLastPart: '</a>',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     expect(de.nativeElement.innerHTML).toContain('hello world');
@@ -537,7 +538,7 @@ describe('<a *scLink>children</a>', () => {
       href: '/lorem',
       text: 'ipsum',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('a'));
@@ -552,7 +553,7 @@ describe('<a *scLink>children</a>', () => {
       },
       text: 'ipsum',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('a'));
@@ -569,7 +570,7 @@ describe('<a *scLink>children</a>', () => {
         },
         text: 'ipsum',
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.query(By.css('a'));
@@ -585,7 +586,7 @@ describe('<a *scLink>children</a>', () => {
         },
         text: 'ipsum',
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.query(By.css('a'));
@@ -601,7 +602,7 @@ describe('<a *scLink>children</a>', () => {
         },
         text: 'ipsum',
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.query(By.css('a'));
@@ -629,7 +630,7 @@ describe('<a *scLink>children</a>', () => {
         value: { src: undefined },
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -641,7 +642,7 @@ describe('<a *scLink>children</a>', () => {
         hred: undefined,
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -653,13 +654,12 @@ describe('<a *scLink>children</a>', () => {
       fixture.detectChanges();
 
       de = fixture.debugElement;
-      comp = fixture.componentInstance;
 
       const field = {
         value: { href: undefined },
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -671,13 +671,12 @@ describe('<a *scLink>children</a>', () => {
       fixture.detectChanges();
 
       de = fixture.debugElement;
-      comp = fixture.componentInstance;
 
       const field = {
         href: undefined,
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -689,8 +688,8 @@ describe('<a *scLink>children</a>', () => {
         value: { href: undefined },
         metadata: testMetadata,
       };
-      comp.field = field;
-      comp.editable = false;
+      fixture.componentRef.setInput('field', field);
+      fixture.componentRef.setInput('editable', false);
       fixture.detectChanges();
       expect(de.children.length).toBe(0);
     });
@@ -700,8 +699,8 @@ describe('<a *scLink>children</a>', () => {
         href: undefined,
         metadata: testMetadata,
       };
-      comp.field = field;
-      comp.editable = false;
+      fixture.componentRef.setInput('field', field);
+      fixture.componentRef.setInput('editable', false);
       fixture.detectChanges();
       expect(de.children.length).toBe(0);
     });
@@ -719,8 +718,8 @@ describe('<a *scLink>children</a>', () => {
               target: '_blank',
             },
           };
-          comp.editable = true;
-          comp.field = linkField;
+          fixture.componentRef.setInput('editable', true);
+          fixture.componentRef.setInput('field', linkField);
           fixture.detectChanges();
 
           const link = de.query(By.css('a')).nativeElement as HTMLElement;
@@ -741,8 +740,8 @@ describe('<a *scLink>children</a>', () => {
             metadata: { foo: 'bar' },
             value: { src: undefined },
           };
-          comp.editable = true;
-          comp.field = field;
+          fixture.componentRef.setInput('editable', true);
+          fixture.componentRef.setInput('field', field);
           fixture.detectChanges();
 
           const fieldValue = de.query(
@@ -772,8 +771,8 @@ describe('<a *scLink>children</a>', () => {
               target: '_blank',
             },
           };
-          comp.editable = false;
-          comp.field = linkField;
+          fixture.componentRef.setInput('editable', false);
+          fixture.componentRef.setInput('field', linkField);
           fixture.detectChanges();
 
           const link = de.query(By.css('a')).nativeElement as HTMLElement;
@@ -798,8 +797,8 @@ describe('<a *scLink>children</a>', () => {
             target: '_blank',
           },
         };
-        comp.editable = true;
-        comp.field = linkField;
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('field', linkField);
         fixture.detectChanges();
 
         const link = de.query(By.css('a')).nativeElement as HTMLElement;
@@ -815,6 +814,8 @@ describe('<a *scLink>children</a>', () => {
 });
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-link-children',
   template: `
     <a *scLink="field()" class="initialClass" id="my-link"></a>
@@ -828,17 +829,16 @@ class TestWithClassComponent {
 describe('<a *scLink class="class"></a>', () => {
   let fixture: ComponentFixture<TestComponent>;
   let de: DebugElement;
-  let comp: TestComponent;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [LinkDirective, TestWithClassComponent],
+      declarations: [],
+      imports: [LinkDirective, TestWithClassComponent],
     });
 
     fixture = TestBed.createComponent(TestWithClassComponent);
     de = fixture.debugElement;
 
-    comp = fixture.componentInstance;
     fixture.detectChanges();
   });
 
@@ -848,7 +848,7 @@ describe('<a *scLink class="class"></a>', () => {
       href: '/lorem',
       text: 'ipsum',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('a'));
@@ -861,7 +861,7 @@ describe('<a *scLink class="class"></a>', () => {
       href: '/lorem',
       text: 'ipsum',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('a'));

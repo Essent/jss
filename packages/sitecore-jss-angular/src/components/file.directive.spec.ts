@@ -4,30 +4,32 @@ import { By } from '@angular/platform-browser';
 
 import { FileDirective } from './file.directive';
 import { FileField } from './rendering-field';
+import { JSS_DIRECTIVES } from '../lib.module';
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-file',
   template: `
     <a *scFile="field()"></a>
   `,
 })
 class TestComponent {
-  readonly field = input<FileField>(undefined);
+  readonly field = input<FileField | undefined>(undefined);
 }
 
 describe('<a *scFile />', () => {
   let fixture: ComponentFixture<TestComponent>;
   let de: DebugElement;
-  let comp: TestComponent;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [FileDirective, TestComponent],
+      declarations: [],
+      imports: [FileDirective, TestComponent],
     });
 
     fixture = TestBed.createComponent(TestComponent);
 
-    comp = fixture.componentInstance;
     fixture.detectChanges();
 
     de = fixture.debugElement.query(By.css('a'));
@@ -41,7 +43,7 @@ describe('<a *scFile />', () => {
     const field = {
       editable: 'lorem',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
     expect(de.nativeElement.href).toBe('');
   });
@@ -52,7 +54,7 @@ describe('<a *scFile />', () => {
       title: 'ipsum',
     };
 
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     expect(de.nativeElement.href).toContain(field.src);
@@ -66,7 +68,7 @@ describe('<a *scFile />', () => {
         displayName: 'ipsum',
       },
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     expect(de.nativeElement.innerHTML).toContain(field.value.displayName);

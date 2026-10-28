@@ -5,15 +5,18 @@ import { By } from '@angular/platform-browser';
 import { textField as eeTextData } from '../test-data/ee-data';
 import { TextField } from './rendering-field';
 import { TextDirective } from './text.directive';
+import { JSS_DIRECTIVES } from '../lib.module';
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-text',
   template: `
     <span *scText="field(); editable: editable(); encode: encode()"></span>
   `,
 })
 class TestComponent {
-  readonly field = input<TextField>(undefined);
+  readonly field = input<TextField | undefined>(undefined);
   readonly editable = input(true);
   readonly encode = input(true);
 }
@@ -23,12 +26,14 @@ const emptyTextFieldEditingTemplate =
   '<span>[This is a *custom* empty field component for text]</span>';
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-empty-template-text',
   template: `
     <span
       *scText="
-        field;
-        editable: editable;
+        field();
+        editable: editable();
         encode: encode;
         emptyFieldEditingTemplate: ${emptyTextFieldEditingTemplateId}
       "
@@ -49,18 +54,17 @@ class TestEmptyTemplateComponent {
 describe('<span *scText />', () => {
   let fixture: ComponentFixture<TestComponent>;
   let de: DebugElement;
-  let comp: TestComponent;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [TextDirective, TestComponent, TestEmptyTemplateComponent],
+      declarations: [],
+      imports: [TextDirective, TestComponent, TestEmptyTemplateComponent],
     });
 
     fixture = TestBed.createComponent(TestComponent);
     fixture.detectChanges();
 
     de = fixture.debugElement;
-    comp = fixture.componentInstance;
   });
 
   it('should render nothing with missing field', () => {
@@ -70,7 +74,7 @@ describe('<span *scText />', () => {
 
   it('should render nothing with missing editable and value', () => {
     const field: { [prop: string]: unknown } = {};
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const deSpan = de.query(By.css('span'));
@@ -82,7 +86,7 @@ describe('<span *scText />', () => {
       value: '',
     };
 
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
     const deSpan = de.query(By.css('span'));
     expect(deSpan).toBeNull();
@@ -94,7 +98,7 @@ describe('<span *scText />', () => {
       editable: 'editable',
     };
 
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
     const rendered = de.query(By.css('span')).nativeElement.innerHTML;
     expect(rendered).toBe('editable');
@@ -105,8 +109,8 @@ describe('<span *scText />', () => {
       value: 'value',
       editable: 'editable',
     };
-    comp.field = field;
-    comp.editable = false;
+    fixture.componentRef.setInput('field', field);
+    fixture.componentRef.setInput('editable', false);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('span')).nativeElement.innerHTML;
@@ -118,8 +122,8 @@ describe('<span *scText />', () => {
       value: 'value < >',
     };
 
-    comp.field = field;
-    comp.editable = false;
+    fixture.componentRef.setInput('field', field);
+    fixture.componentRef.setInput('editable', false);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('span')).nativeElement.innerHTML;
@@ -130,7 +134,7 @@ describe('<span *scText />', () => {
     const field: { [prop: string]: unknown } = {
       value: 'value',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('span')).nativeElement.innerHTML;
@@ -141,7 +145,7 @@ describe('<span *scText />', () => {
     const field: { [prop: string]: unknown } = {
       value: 1.23,
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('span')).nativeElement.innerHTML;
@@ -152,7 +156,7 @@ describe('<span *scText />', () => {
     const field: { [prop: string]: unknown } = {
       value: 0,
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('span')).nativeElement.innerHTML;
@@ -163,8 +167,8 @@ describe('<span *scText />', () => {
     const field: { [prop: string]: unknown } = {
       value: '<input type="text">some crazy stuff<script code="whaaaat">uh oh</script>',
     };
-    comp.field = field;
-    comp.encode = false;
+    fixture.componentRef.setInput('field', field);
+    fixture.componentRef.setInput('encode', false);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('span')).nativeElement.innerHTML;
@@ -175,7 +179,7 @@ describe('<span *scText />', () => {
     const field = {
       editable: eeTextData,
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('span')).nativeElement.innerHTML;
@@ -211,7 +215,7 @@ describe('<span *scText />', () => {
         value: '',
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -225,13 +229,12 @@ describe('<span *scText />', () => {
       fixture.detectChanges();
 
       de = fixture.debugElement;
-      comp = fixture.componentInstance;
 
       const field = {
         value: '',
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -243,8 +246,8 @@ describe('<span *scText />', () => {
         value: '',
         metadata: testMetadata,
       };
-      comp.field = field;
-      comp.editable = false;
+      fixture.componentRef.setInput('field', field);
+      fixture.componentRef.setInput('editable', false);
       fixture.detectChanges();
 
       const deSpan = de.query(By.css('span'));
@@ -258,8 +261,8 @@ describe('<span *scText />', () => {
             metadata: { foo: 'bar' },
             value: 'foo',
           };
-          comp.editable = true;
-          comp.field = field;
+          fixture.componentRef.setInput('editable', true);
+          fixture.componentRef.setInput('field', field);
           fixture.detectChanges();
 
           const fieldValue = de.query(By.css('span'));
@@ -279,8 +282,8 @@ describe('<span *scText />', () => {
             metadata: { foo: 'bar' },
             value: '',
           };
-          comp.editable = true;
-          comp.field = field;
+          fixture.componentRef.setInput('editable', true);
+          fixture.componentRef.setInput('field', field);
           fixture.detectChanges();
 
           const fieldValue = de.query(
@@ -304,8 +307,8 @@ describe('<span *scText />', () => {
             metadata: { foo: 'bar' },
             value: 'foo',
           };
-          comp.editable = false;
-          comp.field = field;
+          fixture.componentRef.setInput('editable', false);
+          fixture.componentRef.setInput('field', field);
           fixture.detectChanges();
 
           const fieldValue = de.query(By.css('span'));
@@ -323,8 +326,8 @@ describe('<span *scText />', () => {
         const field = {
           value: 'foo ',
         };
-        comp.editable = true;
-        comp.field = field;
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('field', field);
         fixture.detectChanges();
 
         const fieldValue = de.query(By.css('span'));

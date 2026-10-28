@@ -5,7 +5,7 @@ import {
   TemplateRef,
   Type,
   inject,
-  input
+  input,
 } from '@angular/core';
 import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
 import { BaseFieldDirective } from '../components/base-field.directive';
@@ -14,11 +14,14 @@ import { TextField } from '../components/rendering-field';
 
 @Directive({
   selector: '[scTestBase]',
+  standalone: true,
 })
-export class TestBaseDirective extends BaseFieldDirective implements OnChanges {
-  readonly editable = input(true, { alias: "scTestBaseEditable" });
-  readonly field = input<TextField>(undefined, { alias: "scTestBase" });
-  readonly emptyFieldEditingTemplate = input<TemplateRef<unknown>>(undefined, { alias: "scTestBaseEmptyFieldEditingTemplate" });
+export class TestBaseDirective extends BaseFieldDirective<TextField> implements OnChanges {
+  readonly editable = input(true, { alias: 'scTestBaseEditable' });
+  readonly field = input<TextField>(undefined, { alias: 'scTestBase' });
+  readonly emptyFieldEditingTemplate = input<TemplateRef<unknown>>(undefined, {
+    alias: 'scTestBaseEmptyFieldEditingTemplate',
+  });
   protected defaultFieldEditingComponent: Type<unknown> = DefaultEmptyFieldEditingComponent;
 
   private templateRef = inject<TemplateRef<unknown>>(TemplateRef);
@@ -32,7 +35,8 @@ export class TestBaseDirective extends BaseFieldDirective implements OnChanges {
   }
 
   private updateView() {
-    if (!this.shouldRender()) {
+    const field = this.field();
+    if (!field || !this.shouldRender()) {
       super.renderEmpty();
       return;
     }
@@ -41,7 +45,6 @@ export class TestBaseDirective extends BaseFieldDirective implements OnChanges {
     this.viewRef = this.viewContainer.createEmbeddedView(this.templateRef);
     this.renderMetadata(MetadataKind.Close);
 
-    const field = this.field();
     const editable = this.editable();
 
     const html = field.editable && editable ? field.editable : field.value;

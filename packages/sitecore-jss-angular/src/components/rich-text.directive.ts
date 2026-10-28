@@ -19,7 +19,7 @@ import { RichTextField } from './rendering-field';
 @Directive({
   selector: '[scRichText]',
 })
-export class RichTextDirective extends BaseFieldDirective implements OnChanges {
+export class RichTextDirective extends BaseFieldDirective<RichTextField> implements OnChanges {
   readonly editable = input(true, { alias: 'scRichTextEditable' });
 
   readonly field: InputSignal<RichTextField | undefined> = input<RichTextField | undefined>(
@@ -51,12 +51,12 @@ export class RichTextDirective extends BaseFieldDirective implements OnChanges {
   }
 
   private updateView() {
-    if (!this.shouldRender()) {
+    const field = this.field();
+    if (!field || !this.shouldRender()) {
       super.renderEmpty();
       return;
     }
 
-    const field = this.field();
     this.renderMetadata(MetadataKind.Open);
     this.viewRef = this.viewContainer.createEmbeddedView(this.templateRef);
     this.renderMetadata(MetadataKind.Close);

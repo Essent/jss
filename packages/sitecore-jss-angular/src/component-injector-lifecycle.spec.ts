@@ -126,12 +126,16 @@ function lazyComponent(
 async function renderFixture<T>(fixture: ComponentFixture<T>) {
   fixture.detectChanges();
   await fixture.whenStable();
-  fixture.detectChanges();
+  await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  fixture.detectChanges(false);
   await fixture.whenStable();
-  fixture.detectChanges();
+  await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  fixture.detectChanges(false);
 }
 
 describe('per-render component injector cleanup', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
   it('destroys the injector when DYNAMIC_COMPONENT is missing', async () => {
     const destroySpy = jasmine.createSpy('destroy');
     const lazyComponents = [lazyComponent('Lazy', async () => makeTrackedProviders(destroySpy))];

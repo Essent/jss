@@ -7,12 +7,13 @@ import {
   makeEnvironmentProviders,
   NgModule,
 } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ROUTES } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ComponentRendering } from '@sitecore-jss/sitecore-jss/layout';
 import { JSS_DIRECTIVES, JssModule, provideJss, provideJssComponents } from './lib.module';
+import { PlaceholderComponent } from './components/placeholder.component';
 import {
   ComponentNameAndModule,
   DYNAMIC_COMPONENT,
@@ -44,6 +45,32 @@ class TestLazyNgModule {}
 class TestLazyPlaceholderHostComponent {
   rendering: ComponentRendering = {} as ComponentRendering;
   inputs: { [key: string]: unknown } = {};
+}
+
+/**
+ * Waits until lazily loaded placeholder components finish rendering.
+ * @param {ComponentFixture<T>} fixture The fixture whose placeholder rendering to await.
+ */
+async function waitForAsyncRender<T>(fixture: ComponentFixture<T>) {
+  let previousPlaceholderCount = -1;
+  let stablePasses = 0;
+  for (let attempt = 0; attempt < 20; attempt++) {
+    await fixture.whenStable();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    fixture.detectChanges(false);
+
+    const placeholders = fixture.debugElement.queryAll(By.directive(PlaceholderComponent));
+    const allPlaceholdersLoaded = placeholders.every(
+      (placeholder) => !placeholder.componentInstance.isLoading
+    );
+    if (allPlaceholdersLoaded && placeholders.length === previousPlaceholderCount) {
+      stablePasses++;
+      if (stablePasses === 2) return;
+    } else {
+      stablePasses = 0;
+    }
+    previousPlaceholderCount = placeholders.length;
+  }
 }
 
 describe('JSS standalone provider API', () => {
@@ -110,10 +137,7 @@ describe('JSS standalone provider API', () => {
         fixture.componentInstance.inputs = { forwardedMessage: 'setInput applied' };
         fixture.detectChanges();
 
-        await fixture.whenStable();
-        fixture.detectChanges();
-        await fixture.whenStable();
-        fixture.detectChanges();
+        await waitForAsyncRender(fixture);
 
         const lazyComponent = fixture.debugElement.query(
           By.directive(TestStandaloneLazyJumbotronComponent)

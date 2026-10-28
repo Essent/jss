@@ -12,6 +12,7 @@ import {
   OnChanges,
   OnDestroy,
   OnInit,
+  OutputRef,
   PLATFORM_ID,
   Renderer2,
   SimpleChanges,
@@ -138,8 +139,8 @@ export class PlaceholderComponent implements OnInit, OnChanges, DoCheck, OnDestr
   readonly renderEmptyTemplate = contentChild(RenderEmptyDirective);
   readonly placeholderLoading = contentChild(PlaceholderLoadingDirective);
   public isLoading = true;
-  metadataMode: boolean;
-  chromeType: string;
+  metadataMode = false;
+  chromeType = '';
   private readonly view = viewChild.required('view', { read: ViewContainerRef });
   private readonly metadataNode = viewChild.required('metadataCodeBlock', { read: TemplateRef });
   private readonly differs = inject(KeyValueDiffers);
@@ -159,8 +160,8 @@ export class PlaceholderComponent implements OnInit, OnChanges, DoCheck, OnDestr
   private readonly platformId = inject(PLATFORM_ID);
   private readonly jssState = inject(JssStateService);
 
-  private _inputs: { [key: string]: unknown };
-  private _differ: KeyValueDiffer<string, unknown>;
+  private _inputs?: { [key: string]: unknown };
+  private _differ?: KeyValueDiffer<string, unknown>;
   private _componentRefs: ComponentRef<unknown>[] = [];
   private placeholderData?: (ComponentRendering<ComponentFields> | HtmlElementRendering)[];
   private destroyed = false;
@@ -319,15 +320,23 @@ export class PlaceholderComponent implements OnInit, OnChanges, DoCheck, OnDestr
     componentInstance: { [key: string]: unknown },
     outputs: { [k: string]: (eventType: unknown) => void }
   ) {
-    Object.keys(outputs)
-      .filter(
-        (output) => componentInstance[output] && componentInstance[output] instanceof Observable
-      )
-      .forEach((output) =>
-        (componentInstance[output] as Observable<unknown>)
-          .pipe(takeWhile(() => !this.destroyed))
-          .subscribe(outputs[output])
-      );
+    Object.keys(outputs).forEach((output) => {
+      const outputSource = componentInstance[output];
+      if (outputSource instanceof Observable) {
+        outputSource.pipe(takeWhile(() => !this.destroyed)).subscribe(outputs[output]);
+      } else if (
+        outputSource &&
+        typeof outputSource === 'object' &&
+        'subscribe' in outputSource &&
+        typeof outputSource.subscribe === 'function'
+      ) {
+        (outputSource as OutputRef<unknown>).subscribe((value) => {
+          if (!this.destroyed) {
+            outputs[output](value);
+          }
+        });
+      }
+    });
   }
 
   private async _render() {
@@ -350,6 +359,7 @@ export class PlaceholderComponent implements OnInit, OnChanges, DoCheck, OnDestr
         'Placeholder name was not specified, and explicit renderings array was not passed. Placeholder requires either name and rendering, or renderings.'
       );
       this.isLoading = false;
+      this.changeDetectorRef.markForCheck();
       return;
     }
 
@@ -357,6 +367,7 @@ export class PlaceholderComponent implements OnInit, OnChanges, DoCheck, OnDestr
     if (!placeholder) {
       console.warn(`Placeholder '${name}' was not found in the current rendering data`);
       this.isLoading = false;
+      this.changeDetectorRef.markForCheck();
       return;
     }
 
@@ -371,6 +382,7 @@ export class PlaceholderComponent implements OnInit, OnChanges, DoCheck, OnDestr
         renderings: placeholder,
       });
       this.isLoading = false;
+      this.changeDetectorRef.markForCheck();
     } else {
       let activeFactories: ComponentFactoryResult[] = [];
       const renderedFactories = new Set<ComponentFactoryResult>();
@@ -426,6 +438,7 @@ export class PlaceholderComponent implements OnInit, OnChanges, DoCheck, OnDestr
           activeFactories.filter((factory) => !renderedFactories.has(factory))
         );
         this.isLoading = false;
+        this.changeDetectorRef.markForCheck();
         if (e instanceof JssCanActivateRedirectError) {
           const redirectValue = e.redirectValue;
           if (redirectValue instanceof RedirectCommand) {

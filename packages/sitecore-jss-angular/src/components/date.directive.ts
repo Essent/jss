@@ -16,7 +16,7 @@ import { DateField } from './rendering-field';
 @Directive({
   selector: '[scDate]',
 })
-export class DateDirective extends BaseFieldDirective implements OnChanges {
+export class DateDirective extends BaseFieldDirective<DateField> implements OnChanges {
   readonly format = input<string>(undefined, { alias: 'scDateFormat' });
 
   readonly timezone = input<string>(undefined, { alias: 'scDateTimezone' });
@@ -56,12 +56,12 @@ export class DateDirective extends BaseFieldDirective implements OnChanges {
   }
 
   private updateView() {
-    if (!this.shouldRender()) {
+    const field = this.field();
+    if (!field || !this.shouldRender()) {
       super.renderEmpty();
       return;
     }
 
-    const field = this.field();
     this.renderMetadata(MetadataKind.Open);
     this.viewRef = this.viewContainer.createEmbeddedView(this.templateRef);
     this.renderMetadata(MetadataKind.Close);
