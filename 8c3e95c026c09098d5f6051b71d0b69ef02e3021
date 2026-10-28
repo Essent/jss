@@ -1,0 +1,25 @@
+packages/sitecore-jss-angular/src/component-injector-lifecycle.spec.ts
+  s_7e1e1d8f76ab3e::t_6df6a4d0071059 53,62,146-164,183,202
+packages/sitecore-jss-angular/src/lib.module.ts
+  s_7e1e1d8f76ab3e::t_55a6c18bdd8a9e 47,65,171
+packages/sitecore-jss-angular/src/services/jss-component-factory.service.ts
+  s_7e1e1d8f76ab3e::t_dd3f9e76e4a8da 120,130,134-138,151-155,163
+packages/sitecore-jss-angular/src/standalone-provider-api.spec.ts
+  s_7e1e1d8f76ab3e::t_eb124ab50c8aa4 40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8c3e95c026c09098d5f6051b71d0b69ef02e3021",
+  "prompts": {},
+  "sessions": {
+    "s_7e1e1d8f76ab3e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ee4975108ffeOGw8Pa4Yzvxebo",
+        "model": "unknown"
+      },
+      "human_author": "Mark van Lagen <mark@markvlagen.nl>"
+    }
+  }
+}
