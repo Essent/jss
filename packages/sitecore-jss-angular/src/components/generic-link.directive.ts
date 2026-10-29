@@ -16,10 +16,7 @@ export class GenericLinkDirective extends LinkDirective {
     alias: 'scGenericLink',
   });
 
-  // Keep the public type stable for consumers that override this input.
-  readonly extras: InputSignal<NavigationExtras> = input<NavigationExtras>(undefined, {
-    alias: 'scGenericLinkExtras',
-  }) as InputSignal<NavigationExtras>;
+  readonly extras = input<NavigationExtras>(undefined, { alias: 'scGenericLinkExtras' });
 
   /**
    * Custom template to render in Pages in Metadata edit mode if field value is empty
