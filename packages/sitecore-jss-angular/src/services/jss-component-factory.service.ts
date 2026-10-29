@@ -22,6 +22,7 @@ import {
   PLACEHOLDER_COMPONENTS,
   PLACEHOLDER_LAZY_COMPONENTS,
 } from './placeholder.token';
+import { isComponentMap, isComponentType, isNgModuleType } from './lazy-component-load-result';
 
 export interface ComponentFactoryResult {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -41,22 +42,6 @@ export interface ComponentFactoryResult {
     | JssCanActivateFn
     | Array<JssCanActivate | JssCanActivateFn | Type<JssCanActivate>>;
   resolve?: { [key: string]: JssResolve<any> | Type<JssResolve<any>> };
-}
-
-/**
- * Checks whether a lazy load result is an NgModule type.
- * @param {unknown} value The lazy load result.
- */
-function isNgModule(value: unknown): value is Type<unknown> {
-  return typeof value === 'function' && Object.prototype.hasOwnProperty.call(value, 'ɵmod');
-}
-
-/**
- * Checks whether a lazy load result contains Angular environment providers.
- * @param {unknown} value The lazy load result.
- */
-function isEnvironmentProviders(value: unknown): value is EnvironmentProviders {
-  return typeof value === 'object' && value !== null && 'ɵproviders' in value;
 }
 
 @Injectable()
@@ -102,13 +87,14 @@ export class JssComponentFactoryService {
         let componentInjector: EnvironmentInjector | undefined;
         let dynamicComponentType: Type<unknown> | Record<string, Type<unknown>> | null;
 
-        if (isNgModule(lazyChild)) {
+        if (isNgModuleType(lazyChild)) {
           moduleRef = createNgModule(lazyChild, this.injector);
           dynamicComponentType = moduleRef.injector.get(DYNAMIC_COMPONENT);
         } else {
-          const providers = isEnvironmentProviders(lazyChild)
-            ? [lazyChild]
-            : [{ provide: DYNAMIC_COMPONENT, useValue: lazyChild }];
+          const providers =
+            isComponentType(lazyChild) || isComponentMap(lazyChild)
+              ? [{ provide: DYNAMIC_COMPONENT, useValue: lazyChild }]
+              : [lazyChild as EnvironmentProviders];
           componentInjector = createEnvironmentInjector(providers, this.environmentInjector);
           dynamicComponentType = componentInjector.get(DYNAMIC_COMPONENT, null, { self: true });
         }

@@ -40,6 +40,7 @@ import { RichTextDirective } from './components/rich-text.directive';
 import { RouterLinkDirective } from './components/router-link.directive';
 import { TextDirective } from './components/text.directive';
 import { JssComponentFactoryService } from './services/jss-component-factory.service';
+import { isNgModuleType } from './services/lazy-component-load-result';
 import { JssStateService } from './services/jss-state.service';
 import { EditingScriptsComponent } from './components/editing-scripts.component';
 import { FormComponent } from './components/form.component';
@@ -104,14 +105,6 @@ function getJssComponentProviders(
 }
 
 /**
- * Checks whether a lazy-loaded value is an NgModule class.
- * @param {unknown} value The lazy-loaded value to check.
- */
-function isNgModule(value: unknown): value is Type<unknown> {
-  return typeof value === 'function' && Object.prototype.hasOwnProperty.call(value, 'ɵmod');
-}
-
-/**
  * Creates router-only copies of the registered lazy entries.
  * @param {ComponentNameAndModule[]} [lazyComponents] The entries to adapt for Angular Router.
  */
@@ -122,7 +115,7 @@ function getRouterLazyComponents(lazyComponents?: ComponentNameAndModule[]) {
       component
         .loadChildren()
         .then((loadedComponent): Type<unknown> | unknown[] =>
-          isNgModule(loadedComponent) ? loadedComponent : []
+          isNgModuleType(loadedComponent) ? loadedComponent : []
         ),
   }));
 }
