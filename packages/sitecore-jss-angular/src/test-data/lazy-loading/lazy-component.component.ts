@@ -1,6 +1,6 @@
+import { Component, inject, input } from '@angular/core';
 import { ComponentRendering } from '@sitecore-jss/sitecore-jss/layout';
 import { MockService } from './mock.service';
-import { Component, Input } from '@angular/core';
 
 /**
  * This component is used to test lazy loading functionality.
@@ -8,15 +8,15 @@ import { Component, Input } from '@angular/core';
 @Component({
   selector: 'lazy-component',
   template: `
-    {{ rendering?.fields?.linkText?.value }}
+    {{ rendering()?.fields?.linkText?.value }}
     {{ getText() }}
   `,
 })
 export class LazyComponent {
-  @Input() rendering: ComponentRendering;
-  @Input() data: unknown;
+  readonly rendering = input<ComponentRendering<any>>();
+  readonly data = input<unknown>();
 
-  constructor(private mockService: MockService) {}
+  private mockService: MockService = inject(MockService);
 
   getText() {
     return this.mockService.get('Hello world');

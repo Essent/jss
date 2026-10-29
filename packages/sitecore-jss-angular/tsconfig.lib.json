@@ -1,0 +1,8 @@
+{
+  // TypeScript 6 turns strict on by default. Keep the package build non-strict, so the
+  // published input types stay the same as in the Angular 20 builds.
+  "extends": "ng-packagr/src/lib/ts/conf/tsconfig.ngc.json",
+  "compilerOptions": {
+    "strict": false
+  }
+}

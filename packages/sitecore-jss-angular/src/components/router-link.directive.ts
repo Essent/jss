@@ -1,39 +1,28 @@
-import {
-  Directive,
-  ElementRef,
-  Input,
-  Renderer2,
-  TemplateRef,
-  ViewContainerRef,
-} from '@angular/core';
+import { Directive, InputSignal, TemplateRef, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { LinkDirective } from './link.directive';
 import { LinkField } from './rendering-field';
 
 @Directive({ selector: '[scRouterLink]' })
 export class RouterLinkDirective extends LinkDirective {
-  @Input('scRouterLinkEditable') editable = true;
+  readonly editable = input(true, { alias: 'scRouterLinkEditable' });
 
-  @Input('scRouterLinkAttrs') attrs: { [attr: string]: string } = {};
+  readonly attrs = input<{
+    [attr: string]: string;
+  }>({}, { alias: 'scRouterLinkAttrs' });
 
-  @Input('scRouterLink') declare field: LinkField;
+  readonly field: InputSignal<LinkField | undefined> = input<LinkField | undefined>(undefined, {
+    alias: 'scRouterLink',
+  });
 
   /**
    * Custom template to render in Pages in Metadata edit mode if field value is empty
    */
-  @Input('scRouterLinkEmptyFieldEditingTemplate') declare emptyFieldEditingTemplate: TemplateRef<
-    unknown
-  >;
+  readonly emptyFieldEditingTemplate = input<TemplateRef<unknown>>(undefined, {
+    alias: 'scRouterLinkEmptyFieldEditingTemplate',
+  });
 
-  constructor(
-    viewContainer: ViewContainerRef,
-    templateRef: TemplateRef<unknown>,
-    renderer: Renderer2,
-    elementRef: ElementRef,
-    private router: Router
-  ) {
-    super(viewContainer, templateRef, renderer, elementRef);
-  }
+  private readonly router = inject(Router);
 
   protected renderTemplate(props: { [prop: string]: string }, linkText: string) {
     const viewRef = this.viewContainer.createEmbeddedView(this.templateRef);

@@ -1,4 +1,4 @@
-import { Component, DebugElement, Input, TemplateRef } from '@angular/core';
+import { Component, DebugElement, TemplateRef, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
@@ -7,22 +7,25 @@ import { GenericLinkDirective } from './generic-link.directive';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Router } from '@angular/router';
 import { LinkField } from './rendering-field';
+import { JSS_DIRECTIVES } from '../lib.module';
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-router-link',
   template: `
     <a
-      *scGenericLink="field; editable: editable; attrs: attrs; extras: extras"
+      *scGenericLink="field(); editable: editable(); attrs: attrs(); extras: extras()"
       class="external-css-class"
       id="my-link"
     ></a>
   `,
 })
 class TestComponent {
-  @Input() field: LinkField;
-  @Input() editable = true;
-  @Input() attrs = {};
-  @Input() extras = {};
+  readonly field = input<LinkField | undefined>(undefined);
+  readonly editable = input(true);
+  readonly attrs = input({});
+  readonly extras = input({});
 }
 
 const emptyLinkFieldEditingTemplateId = 'emptyLinkFieldEditingTemplate';
@@ -31,14 +34,16 @@ const emptyLinkFieldEditingTemplateDefaultTestString =
   '<span sc-default-empty-text-field-editing-placeholder="">[No text in field]</span>';
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-empty-template-generic-link',
   template: `
     <a
       *scGenericLink="
-        field;
-        editable: editable;
-        attrs: attrs;
-        extras: extras;
+        field();
+        editable: editable();
+        attrs: attrs();
+        extras: extras();
         emptyFieldEditingTemplate: ${emptyLinkFieldEditingTemplateId}
       "
       class="external-css-class"
@@ -50,28 +55,31 @@ const emptyLinkFieldEditingTemplateDefaultTestString =
   `,
 })
 class TestEmptyTemplateComponent {
-  @Input() field: LinkField;
-  @Input() editable = true;
-  @Input() attrs = {};
-  @Input() extras = {};
-  @Input() emptyFieldEditingTemplate: TemplateRef<unknown>;
+  readonly field = input<LinkField>();
+  readonly editable = input(true);
+  readonly attrs = input({});
+  readonly extras = input({});
+  readonly emptyFieldEditingTemplate = input<TemplateRef<unknown>>();
 }
 
 describe('<a *scGenericLink />', () => {
   let fixture: ComponentFixture<TestComponent>;
   let de: DebugElement;
-  let comp: TestComponent;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [GenericLinkDirective, TestComponent, TestEmptyTemplateComponent],
-      imports: [RouterTestingModule],
+      declarations: [],
+      imports: [
+        RouterTestingModule,
+        GenericLinkDirective,
+        TestComponent,
+        TestEmptyTemplateComponent,
+      ],
     });
 
     fixture = TestBed.createComponent(TestComponent);
     de = fixture.debugElement;
 
-    comp = fixture.componentInstance;
     fixture.detectChanges();
   });
 
@@ -81,7 +89,7 @@ describe('<a *scGenericLink />', () => {
 
   it('should render nothing with missing editable and value', () => {
     const field = {};
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     expect(de.children.length).toBe(0);
@@ -92,7 +100,7 @@ describe('<a *scGenericLink />', () => {
       editableFirstPart: '<a class="yo" href="/services">Lorem',
       editableLastPart: '</a>',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     expect(de.nativeElement.querySelector('span').innerHTML).toContain(field.editableFirstPart);
@@ -106,8 +114,8 @@ describe('<a *scGenericLink />', () => {
       },
       editable: '<a href="/services" class="yo">Lorem</a>',
     };
-    comp.field = field;
-    comp.editable = false;
+    fixture.componentRef.setInput('field', field);
+    fixture.componentRef.setInput('editable', false);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('a'));
@@ -119,7 +127,7 @@ describe('<a *scGenericLink />', () => {
       href: '/lorem',
       text: 'ipsum',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('a'));
@@ -131,7 +139,7 @@ describe('<a *scGenericLink />', () => {
       editableFirstPart: eeLinkData,
       editableLastPart: '</a>',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.nativeElement.querySelector('span');
@@ -151,7 +159,7 @@ describe('<a *scGenericLink />', () => {
         target: '_blank',
       },
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('a'));
@@ -166,7 +174,7 @@ describe('<a *scGenericLink />', () => {
       editableFirstPart: '<a href="/services" class="yo">Lorem',
       editableLastPart: '</a>',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.nativeElement.querySelector('span');
@@ -178,8 +186,8 @@ describe('<a *scGenericLink />', () => {
       editableFirstPart: '<a href="/services" class="yo">Lorem',
       editableLastPart: '</a>',
     };
-    comp.field = field;
-    comp.attrs = { title: 'footip' };
+    fixture.componentRef.setInput('field', field);
+    fixture.componentRef.setInput('attrs', { title: 'footip' });
     fixture.detectChanges();
 
     const rendered = de.nativeElement.querySelector('span');
@@ -196,8 +204,8 @@ describe('<a *scGenericLink />', () => {
         target: '_blank',
       },
     };
-    comp.field = field;
-    comp.attrs = { title: 'footip' };
+    fixture.componentRef.setInput('field', field);
+    fixture.componentRef.setInput('attrs', { title: 'footip' });
     fixture.detectChanges();
 
     const rendered = de.query(By.css('a'));
@@ -224,7 +232,7 @@ describe('<a *scGenericLink />', () => {
         value: { src: undefined },
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -236,7 +244,7 @@ describe('<a *scGenericLink />', () => {
         hred: undefined,
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -248,13 +256,12 @@ describe('<a *scGenericLink />', () => {
       fixture.detectChanges();
 
       de = fixture.debugElement;
-      comp = fixture.componentInstance;
 
       const field = {
         value: { href: undefined },
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -266,13 +273,12 @@ describe('<a *scGenericLink />', () => {
       fixture.detectChanges();
 
       de = fixture.debugElement;
-      comp = fixture.componentInstance;
 
       const field = {
         href: undefined,
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -284,8 +290,8 @@ describe('<a *scGenericLink />', () => {
         value: { href: undefined },
         metadata: testMetadata,
       };
-      comp.field = field;
-      comp.editable = false;
+      fixture.componentRef.setInput('field', field);
+      fixture.componentRef.setInput('editable', false);
       fixture.detectChanges();
       expect(de.children.length).toBe(0);
     });
@@ -295,8 +301,8 @@ describe('<a *scGenericLink />', () => {
         href: undefined,
         metadata: testMetadata,
       };
-      comp.field = field;
-      comp.editable = false;
+      fixture.componentRef.setInput('field', field);
+      fixture.componentRef.setInput('editable', false);
       fixture.detectChanges();
       expect(de.children.length).toBe(0);
     });
@@ -304,29 +310,35 @@ describe('<a *scGenericLink />', () => {
 });
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-router-link-children',
   template: `
-    <a *scGenericLink="field; editable: editable; attrs: attrs; extras: extras" id="my-link"
-      ><span *ngIf="true">hello world</span></a
+    <a *scGenericLink="field(); editable: editable(); attrs: attrs(); extras: extras()" id="my-link"
+      >@if (true) {
+      <span>hello world</span>
+      }</a
     >
   `,
 })
 class TestWithChildrenComponent {
-  @Input() field: LinkField;
-  @Input() editable = true;
-  @Input() attrs = {};
-  @Input() extras = {};
+  readonly field = input<LinkField>();
+  readonly editable = input(true);
+  readonly attrs = input({});
+  readonly extras = input({});
 }
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-empty-template-generic-link',
   template: `
     <a
       *scGenericLink="
-        field;
-        editable: editable;
-        attrs: attrs;
-        extras: extras;
+        field();
+        editable: editable();
+        attrs: attrs();
+        extras: extras();
         emptyFieldEditingTemplate: ${emptyLinkFieldEditingTemplateId}
       "
       id="my-link"
@@ -338,32 +350,31 @@ class TestWithChildrenComponent {
   `,
 })
 class TestEmptyTemplateWithChildrenComponent {
-  @Input() field: LinkField;
-  @Input() editable = true;
-  @Input() attrs = {};
-  @Input() extras = {};
-  @Input() emptyFieldEditingTemplate: TemplateRef<unknown>;
+  readonly field = input<LinkField>();
+  readonly editable = input(true);
+  readonly attrs = input({});
+  readonly extras = input({});
+  readonly emptyFieldEditingTemplate = input<TemplateRef<unknown>>();
 }
 
 describe('<a *scGenericLink>children</a>', () => {
   let fixture: ComponentFixture<TestComponent>;
   let de: DebugElement;
-  let comp: TestComponent;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [
+      declarations: [],
+      imports: [
+        RouterTestingModule,
         GenericLinkDirective,
         TestWithChildrenComponent,
         TestEmptyTemplateWithChildrenComponent,
       ],
-      imports: [RouterTestingModule],
     });
 
     fixture = TestBed.createComponent(TestWithChildrenComponent);
     de = fixture.debugElement;
 
-    comp = fixture.componentInstance;
     fixture.detectChanges();
   });
 
@@ -372,7 +383,7 @@ describe('<a *scGenericLink>children</a>', () => {
       editableFirstPart: '<a class="yo" href="/services">Lorem',
       editableLastPart: '</a>',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     expect(de.nativeElement.innerHTML).toContain('hello world');
@@ -383,7 +394,7 @@ describe('<a *scGenericLink>children</a>', () => {
       href: '/lorem',
       text: 'ipsum',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('a'));
@@ -408,7 +419,7 @@ describe('<a *scGenericLink>children</a>', () => {
         value: { src: undefined },
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -420,7 +431,7 @@ describe('<a *scGenericLink>children</a>', () => {
         hred: undefined,
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -432,13 +443,12 @@ describe('<a *scGenericLink>children</a>', () => {
       fixture.detectChanges();
 
       de = fixture.debugElement;
-      comp = fixture.componentInstance;
 
       const field = {
         value: { href: undefined },
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -450,13 +460,12 @@ describe('<a *scGenericLink>children</a>', () => {
       fixture.detectChanges();
 
       de = fixture.debugElement;
-      comp = fixture.componentInstance;
 
       const field = {
         href: undefined,
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -468,8 +477,8 @@ describe('<a *scGenericLink>children</a>', () => {
         value: { href: undefined },
         metadata: testMetadata,
       };
-      comp.field = field;
-      comp.editable = false;
+      fixture.componentRef.setInput('field', field);
+      fixture.componentRef.setInput('editable', false);
       fixture.detectChanges();
       expect(de.children.length).toBe(0);
     });
@@ -479,8 +488,8 @@ describe('<a *scGenericLink>children</a>', () => {
         href: undefined,
         metadata: testMetadata,
       };
-      comp.field = field;
-      comp.editable = false;
+      fixture.componentRef.setInput('field', field);
+      fixture.componentRef.setInput('editable', false);
       fixture.detectChanges();
       expect(de.children.length).toBe(0);
     });
@@ -495,8 +504,12 @@ describe('<a *scGenericLink></a>', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [GenericLinkDirective, TestComponent],
-      imports: [RouterTestingModule.withRoutes([{ path: 'lorem', component: TestComponent }])],
+      declarations: [],
+      imports: [
+        RouterTestingModule.withRoutes([{ path: 'lorem', component: TestComponent }]),
+        GenericLinkDirective,
+        TestComponent,
+      ],
     });
 
     router = TestBed.inject(Router);
@@ -513,16 +526,16 @@ describe('<a *scGenericLink></a>', () => {
       href: 'lorem',
       text: 'ipsum',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const renderedLink = de.query(By.css('a')).nativeElement;
     expect(renderedLink.getAttribute('href')).toBe(`/${field.href}`);
     renderedLink.click();
     fixture.detectChanges();
-    expect(comp.extras).toEqual({});
+    expect(comp.extras()).toEqual({});
     expect(router.navigate).toHaveBeenCalledWith(['lorem'], {
-      ...comp.extras,
+      ...comp.extras(),
       fragment: undefined,
     });
   });
@@ -533,8 +546,8 @@ describe('<a *scGenericLink></a>', () => {
       text: 'ipsum',
     };
     const queryParams = { queryParams: { foo: 'bar' } };
-    comp.field = field;
-    comp.extras = queryParams;
+    fixture.componentRef.setInput('field', field);
+    fixture.componentRef.setInput('extras', queryParams);
     fixture.detectChanges();
 
     const renderedLink = de.query(By.css('a')).nativeElement;
@@ -552,7 +565,7 @@ describe('<a *scGenericLink></a>', () => {
       href: 'http://foo.bar/lorem',
       text: 'ipsum',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const renderedLink = de.query(By.css('a')).nativeElement;

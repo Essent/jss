@@ -37,6 +37,16 @@
                 "src/assets"
               ],              
               "scripts": []
+            },
+            "configurations": {
+              "standalone-api": {
+                "tsConfig": "tsconfig.spec.standalone-api.json",
+                "include": [
+                  "src/component-injector-lifecycle.spec.ts",
+                  "src/standalone-provider-api.spec.ts",
+                  "src/services/lazy-component-load-result.spec.ts"
+                ]
+              }
             }
           }
         }
