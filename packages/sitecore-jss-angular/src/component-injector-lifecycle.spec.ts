@@ -3,11 +3,14 @@ import {
   DestroyRef,
   ENVIRONMENT_INITIALIZER,
   inject,
+  Injectable,
   InjectionToken,
+  Injector,
   input,
   makeEnvironmentProviders,
   NgModule,
   Provider,
+  Type,
 } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -27,6 +30,14 @@ import {
 class TestLazyNgModule {}
 
 const CHILD_VALUE = new InjectionToken<string>('child component value');
+
+/**
+ * Holds callbacks that outlive the rendered component, like NgRx effect sources.
+ */
+@Injectable({ providedIn: 'root' })
+class AppLifetimeSources {
+  readonly sources: Array<() => string> = [];
+}
 
 @Component({
   standalone: true,
@@ -87,6 +98,8 @@ function makePlaceholderRendering(componentName: string): ComponentRendering {
 
 /**
  * Creates environment providers that report when their injector is destroyed.
+ * Like NgRx provideEffects(), the initializer registers a source in a root service
+ * that keeps using the lazy injector.
  * @param {jasmine.Spy} destroySpy The spy to call during injector destruction.
  * @param {unknown} [dynamicComponent] The optional value for DYNAMIC_COMPONENT.
  */
@@ -95,7 +108,11 @@ function makeTrackedProviders(destroySpy: jasmine.Spy, dynamicComponent?: unknow
     {
       provide: ENVIRONMENT_INITIALIZER,
       multi: true,
-      useValue: () => inject(DestroyRef).onDestroy(destroySpy),
+      useValue: () => {
+        const injector = inject(Injector);
+        inject(DestroyRef).onDestroy(destroySpy);
+        inject(AppLifetimeSources).sources.push(() => injector.get(CHILD_VALUE));
+      },
     },
     { provide: CHILD_VALUE, useValue: 'from component injector' },
   ];
@@ -131,209 +148,95 @@ async function renderFixture<T>(fixture: ComponentFixture<T>) {
   fixture.detectChanges();
 }
 
-describe('per-render component injector cleanup', () => {
-  it('destroys the injector when DYNAMIC_COMPONENT is missing', async () => {
-    const destroySpy = jasmine.createSpy('destroy');
-    const lazyComponents = [lazyComponent('Lazy', async () => makeTrackedProviders(destroySpy))];
-    await TestBed.configureTestingModule({
-      providers: [provideJssComponents([], lazyComponents)],
-    }).compileComponents();
+/**
+ * Checks that every source registered by lazy providers can still use its injector.
+ */
+function expectAppLifetimeSourcesUsable() {
+  const { sources } = TestBed.inject(AppLifetimeSources);
+  expect(sources.length).toBeGreaterThan(0);
+  sources.forEach((source) => expect(source()).toBe('from component injector'));
+}
 
-    await expectAsync(
-      TestBed.inject(JssComponentFactoryService).getComponent({
-        componentName: 'Lazy',
-      } as ComponentRendering)
-    ).toBeRejectedWithError(/Lazy providers for component "Lazy" do not provide DYNAMIC_COMPONENT/);
-    expect(destroySpy).toHaveBeenCalledTimes(1);
-  });
-
-  it('does not use a parent DYNAMIC_COMPONENT provider', async () => {
-    const destroySpy = jasmine.createSpy('destroy');
-    const lazyComponents = [lazyComponent('Lazy', async () => makeTrackedProviders(destroySpy))];
-    await TestBed.configureTestingModule({
-      providers: [
-        provideJssComponents([], lazyComponents),
-        { provide: DYNAMIC_COMPONENT, useValue: TrackingComponent },
-      ],
-    }).compileComponents();
-
-    await expectAsync(
-      TestBed.inject(JssComponentFactoryService).getComponent({
-        componentName: 'Lazy',
-      } as ComponentRendering)
-    ).toBeRejectedWithError(/Lazy providers for component "Lazy" do not provide DYNAMIC_COMPONENT/);
-    expect(destroySpy).toHaveBeenCalledTimes(1);
-  });
-
-  it('destroys the injector when the component name is missing from the map', async () => {
-    const destroySpy = jasmine.createSpy('destroy');
+describe('lazy component injector lifetime', () => {
+  it('creates a new injector for each render, like the NgModule path', async () => {
     const lazyComponents = [
       lazyComponent('Lazy', async () =>
-        makeTrackedProviders(destroySpy, { Other: TrackingComponent })
+        makeTrackedProviders(jasmine.createSpy('destroy'), TrackingComponent)
       ),
     ];
     await TestBed.configureTestingModule({
       providers: [provideJssComponents([], lazyComponents)],
     }).compileComponents();
+    const factory = TestBed.inject(JssComponentFactoryService);
 
-    await expectAsync(
-      TestBed.inject(JssComponentFactoryService).getComponent({
-        componentName: 'Lazy',
-      } as ComponentRendering)
-    ).toBeRejectedWithError(/component map does not contain "Lazy"/);
-    expect(destroySpy).toHaveBeenCalledTimes(1);
+    const first = await factory.getComponent({ componentName: 'Lazy' } as ComponentRendering);
+    const second = await factory.getComponent({ componentName: 'Lazy' } as ComponentRendering);
+
+    expect(first.componentInjector).toBeDefined();
+    expect(second.componentInjector).toBeDefined();
+    expect(second.componentInjector).not.toBe(first.componentInjector);
   });
 
-  it('destroys the injector when the component map value is not a function', async () => {
-    const destroySpy = jasmine.createSpy('destroy');
-    const lazyComponents = [
-      lazyComponent('Lazy', async () =>
-        makeTrackedProviders(destroySpy, { Lazy: 'not a component' })
-      ),
-    ];
-    await TestBed.configureTestingModule({
-      providers: [provideJssComponents([], lazyComponents)],
-    }).compileComponents();
-
-    await expectAsync(
-      TestBed.inject(JssComponentFactoryService).getComponent({
-        componentName: 'Lazy',
-      } as ComponentRendering)
-    ).toBeRejectedWithError(/component map entry for "Lazy" is not a component type/);
-    expect(destroySpy).toHaveBeenCalledTimes(1);
-  });
-
-  it('destroys resolved sibling injectors and preserves the rejection from getComponents', async () => {
-    const destroySpy = jasmine.createSpy('destroy');
-    const originalError = new Error('lazy load failed');
-    const lazyComponents = [
-      lazyComponent('Good', async () => makeTrackedProviders(destroySpy, TrackingComponent)),
-      lazyComponent('Bad', async () => Promise.reject(originalError)),
-    ];
-    await TestBed.configureTestingModule({
-      providers: [provideJssComponents([], lazyComponents)],
-    }).compileComponents();
-
-    let receivedError: unknown;
-    try {
-      await TestBed.inject(JssComponentFactoryService).getComponents([
-        { componentName: 'Good' } as ComponentRendering,
-        { componentName: 'Bad' } as ComponentRendering,
-      ]);
-    } catch (error) {
-      receivedError = error;
-    }
-
-    expect(receivedError).toBe(originalError);
-    expect(destroySpy).toHaveBeenCalledTimes(1);
-  });
-
-  it('destroys the injector when the placeholder destroys its component', async () => {
-    const destroySpy = jasmine.createSpy('destroy');
-    const lazyComponents = [
-      lazyComponent('Lazy', async () => makeTrackedProviders(destroySpy, TrackingComponent)),
-    ];
-    await TestBed.configureTestingModule({
-      imports: [RouterTestingModule, PlaceholderHostComponent],
-      providers: [provideJssComponents([], lazyComponents)],
-    }).compileComponents();
-    const fixture = TestBed.createComponent(PlaceholderHostComponent);
-    await renderFixture(fixture);
-
-    expect(destroySpy).not.toHaveBeenCalled();
-    fixture.destroy();
-    expect(destroySpy).toHaveBeenCalledTimes(1);
-  });
-
-  it('destroys the injector when placeholder component creation throws', async () => {
-    const destroySpy = jasmine.createSpy('destroy');
-    const lazyComponents = [
-      lazyComponent('Lazy', async () => makeTrackedProviders(destroySpy, ThrowingComponent)),
-    ];
-    await TestBed.configureTestingModule({
-      imports: [RouterTestingModule, PlaceholderHostComponent],
-      providers: [provideJssComponents([], lazyComponents)],
-    }).compileComponents();
-    const fixture = TestBed.createComponent(PlaceholderHostComponent);
-    await renderFixture(fixture);
-
-    expect(destroySpy).toHaveBeenCalledTimes(1);
-    fixture.destroy();
-  });
-
-  it('destroys injectors for renderings filtered out by a guard', async () => {
-    const destroySpy = jasmine.createSpy('destroy');
-    const lazyComponents = [
-      lazyComponent('Lazy', async () => makeTrackedProviders(destroySpy, TrackingComponent), {
-        canActivate: () => false,
-      }),
-    ];
-    await TestBed.configureTestingModule({
-      imports: [RouterTestingModule, PlaceholderHostComponent],
-      providers: [provideJssComponents([], lazyComponents)],
-    }).compileComponents();
-    const fixture = TestBed.createComponent(PlaceholderHostComponent);
-    await renderFixture(fixture);
-
-    expect(destroySpy).toHaveBeenCalledTimes(1);
-    fixture.destroy();
-  });
-
-  it('destroys injectors when a guard redirects', async () => {
-    const destroySpy = jasmine.createSpy('destroy');
-    const lazyComponents = [
-      lazyComponent('Lazy', async () => makeTrackedProviders(destroySpy, TrackingComponent), {
-        canActivate: () => TestBed.inject(Router).parseUrl('/'),
-      }),
-    ];
-    await TestBed.configureTestingModule({
-      imports: [RouterTestingModule, PlaceholderHostComponent],
-      providers: [provideJssComponents([], lazyComponents)],
-    }).compileComponents();
-    const fixture = TestBed.createComponent(PlaceholderHostComponent);
-    await renderFixture(fixture);
-
-    expect(destroySpy).toHaveBeenCalledTimes(1);
-    fixture.destroy();
-  });
-
-  it('destroys injectors when data resolution rejects', async () => {
-    const destroySpy = jasmine.createSpy('destroy');
-    const lazyComponents = [
-      lazyComponent('Lazy', async () => makeTrackedProviders(destroySpy, TrackingComponent), {
+  [
+    {
+      scenario: 'the placeholder destroys its component',
+      host: PlaceholderHostComponent as Type<unknown>,
+      component: TrackingComponent as Type<unknown>,
+      extras: {},
+    },
+    {
+      scenario: 'placeholder component creation throws',
+      host: PlaceholderHostComponent,
+      component: ThrowingComponent,
+      extras: {},
+    },
+    {
+      scenario: 'a guard denies the rendering',
+      host: PlaceholderHostComponent,
+      component: TrackingComponent,
+      extras: { canActivate: () => false },
+    },
+    {
+      scenario: 'a guard redirects',
+      host: PlaceholderHostComponent,
+      component: TrackingComponent,
+      extras: { canActivate: () => TestBed.inject(Router).parseUrl('/') },
+    },
+    {
+      scenario: 'data resolution rejects',
+      host: PlaceholderHostComponent,
+      component: TrackingComponent,
+      extras: {
         resolve: { value: { resolve: () => Promise.reject(new Error('resolver failed')) } },
-      }),
-    ];
-    await TestBed.configureTestingModule({
-      imports: [RouterTestingModule, PlaceholderHostComponent],
-      providers: [provideJssComponents([], lazyComponents)],
-    }).compileComponents();
-    const fixture = TestBed.createComponent(PlaceholderHostComponent);
-    await renderFixture(fixture);
+      },
+    },
+    {
+      scenario: 'renderEach renders the component with sc-render-component',
+      host: RenderEachHostComponent,
+      component: TrackingComponent,
+      extras: {},
+    },
+  ].forEach(({ scenario, host, component, extras }) => {
+    it(`keeps the injector usable when ${scenario}`, async () => {
+      const destroySpy = jasmine.createSpy('destroy');
+      const lazyComponents = [
+        lazyComponent('Lazy', async () => makeTrackedProviders(destroySpy, component), extras),
+      ];
+      await TestBed.configureTestingModule({
+        imports: [RouterTestingModule, host],
+        providers: [provideJssComponents([], lazyComponents)],
+      }).compileComponents();
+      const fixture = TestBed.createComponent(host);
+      await renderFixture(fixture);
 
-    expect(destroySpy).toHaveBeenCalledTimes(1);
-    fixture.destroy();
+      fixture.destroy();
+
+      expect(destroySpy).not.toHaveBeenCalled();
+      expectAppLifetimeSourcesUsable();
+    });
   });
 
-  it('destroys the unused placeholder injector in renderEach and the rendered injector on teardown', async () => {
-    const destroySpy = jasmine.createSpy('destroy');
-    const lazyComponents = [
-      lazyComponent('Lazy', async () => makeTrackedProviders(destroySpy, TrackingComponent)),
-    ];
-    await TestBed.configureTestingModule({
-      imports: [RouterTestingModule, RenderEachHostComponent],
-      providers: [provideJssComponents([], lazyComponents)],
-    }).compileComponents();
-    const fixture = TestBed.createComponent(RenderEachHostComponent);
-    await renderFixture(fixture);
-
-    expect(fixture.debugElement.query(By.directive(TrackingComponent))).not.toBeNull();
-    expect(destroySpy).toHaveBeenCalledTimes(1);
-    fixture.destroy();
-    expect(destroySpy).toHaveBeenCalledTimes(2);
-  });
-
-  it('passes and destroys the injector in sc-render-component', async () => {
+  it('passes the injector to sc-render-component and keeps it after teardown', async () => {
     const destroySpy = jasmine.createSpy('destroy');
     const lazyComponents = [
       lazyComponent('Lazy', async () => makeTrackedProviders(destroySpy, TrackingComponent)),
@@ -348,30 +251,75 @@ describe('per-render component injector cleanup', () => {
 
     const component = fixture.debugElement.query(By.directive(TrackingComponent));
     expect(component.componentInstance.childValue).toBe('from component injector');
-    expect(destroySpy).not.toHaveBeenCalled();
     fixture.destroy();
-    expect(destroySpy).toHaveBeenCalledTimes(1);
+    expect(destroySpy).not.toHaveBeenCalled();
+    expectAppLifetimeSourcesUsable();
   });
 
-  it('destroys the injector when sc-render-component creation throws', async () => {
+  it('keeps resolved sibling injectors and preserves the rejection from getComponents', async () => {
     const destroySpy = jasmine.createSpy('destroy');
+    const originalError = new Error('lazy load failed');
     const lazyComponents = [
-      lazyComponent('Lazy', async () => makeTrackedProviders(destroySpy, ThrowingComponent)),
+      lazyComponent('Good', async () => makeTrackedProviders(destroySpy, TrackingComponent)),
+      lazyComponent('Bad', async () => Promise.reject(originalError)),
     ];
     await TestBed.configureTestingModule({
-      imports: [RouterTestingModule, RenderComponentComponent],
       providers: [provideJssComponents([], lazyComponents)],
     }).compileComponents();
-    const fixture = TestBed.createComponent(RenderComponentComponent);
-    fixture.detectChanges();
-    fixture.componentRef.setInput('rendering', { componentName: 'Lazy' } as ComponentRendering);
-    const render = ((fixture.componentInstance as unknown) as {
-      _render: () => Promise<void>;
-    })._render();
 
-    await expectAsync(render).toBeRejected();
-    expect(destroySpy).toHaveBeenCalledTimes(1);
-    fixture.destroy();
+    await expectAsync(
+      TestBed.inject(JssComponentFactoryService).getComponents([
+        { componentName: 'Good' } as ComponentRendering,
+        { componentName: 'Bad' } as ComponentRendering,
+      ])
+    ).toBeRejectedWith(originalError);
+    expect(destroySpy).not.toHaveBeenCalled();
+  });
+});
+
+describe('lazy component injector errors', () => {
+  [
+    {
+      scenario: 'DYNAMIC_COMPONENT is missing',
+      dynamicComponent: undefined,
+      parentProviders: [] as Provider[],
+      error: /Lazy providers for component "Lazy" do not provide DYNAMIC_COMPONENT/,
+    },
+    {
+      scenario: 'only a parent injector provides DYNAMIC_COMPONENT',
+      dynamicComponent: undefined,
+      parentProviders: [{ provide: DYNAMIC_COMPONENT, useValue: TrackingComponent }],
+      error: /Lazy providers for component "Lazy" do not provide DYNAMIC_COMPONENT/,
+    },
+    {
+      scenario: 'the component map does not contain the component name',
+      dynamicComponent: { Other: TrackingComponent },
+      parentProviders: [],
+      error: /component map does not contain "Lazy"/,
+    },
+    {
+      scenario: 'the component map value is not a function',
+      dynamicComponent: { Lazy: 'not a component' },
+      parentProviders: [],
+      error: /component map entry for "Lazy" is not a component type/,
+    },
+  ].forEach(({ scenario, dynamicComponent, parentProviders, error }) => {
+    it(`rejects with a JSS error when ${scenario}`, async () => {
+      const lazyComponents = [
+        lazyComponent('Lazy', async () =>
+          makeTrackedProviders(jasmine.createSpy('destroy'), dynamicComponent)
+        ),
+      ];
+      await TestBed.configureTestingModule({
+        providers: [provideJssComponents([], lazyComponents), ...parentProviders],
+      }).compileComponents();
+
+      await expectAsync(
+        TestBed.inject(JssComponentFactoryService).getComponent({
+          componentName: 'Lazy',
+        } as ComponentRendering)
+      ).toBeRejectedWithError(error);
+    });
   });
 });
 

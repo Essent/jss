@@ -25,28 +25,6 @@ import { RawComponent } from './raw.component';
 import { isRawRendering } from './rendering';
 
 /**
- * Destroys the injector that provides a lazily loaded standalone component.
- * @param {ComponentFactoryResult['componentInjector']} componentInjector The injector to destroy, if created.
- */
-function destroyComponentInjector(componentInjector?: ComponentFactoryResult['componentInjector']) {
-  if (componentInjector && !componentInjector.destroyed) {
-    componentInjector.destroy();
-  }
-}
-
-/**
- * Destroys an injector without replacing the error that caused cleanup.
- * @param {ComponentFactoryResult} factory The factory result that owns the injector.
- */
-function destroyComponentInjectorAfterError(factory: ComponentFactoryResult) {
-  try {
-    destroyComponentInjector(factory.componentInjector);
-  } catch {
-    // Preserve the error that caused the injector cleanup.
-  }
-}
-
-/**
  * Renders a single JSS component given a rendering definition.
  * Useful inside templated placeholders.
  */
@@ -135,7 +113,6 @@ export class RenderComponentComponent implements OnChanges, OnDestroy {
 
     return resolveComponent.then((rendering) => {
       if (this.destroyed) {
-        destroyComponentInjectorAfterError(rendering);
         return;
       }
 
@@ -152,36 +129,16 @@ export class RenderComponentComponent implements OnChanges, OnDestroy {
         rendering.componentImplementation = this.missingComponentComponent;
       }
 
-      let componentRef: ComponentRef<unknown> | undefined;
-      try {
-        componentRef = rendering.componentInjector
-          ? view.createComponent(rendering.componentImplementation, {
-              environmentInjector: rendering.componentInjector,
-            })
-          : view.createComponent(rendering.componentImplementation);
-        componentRef.onDestroy(() => destroyComponentInjector(rendering.componentInjector));
-        componentRef.setInput('rendering', rendering.componentDefinition);
-        if (this._inputs) {
-          this._setComponentInputs(componentRef, this._inputs);
-        }
-        const outputs = this.outputs();
-        if (outputs) {
-          this._subscribeComponentOutputs(
-            componentRef.instance as { [key: string]: unknown },
-            outputs
-          );
-        }
-      } catch (error) {
-        if (componentRef) {
-          try {
-            componentRef.destroy();
-          } catch {
-            // Preserve the component creation or setup error.
-          }
-        } else {
-          destroyComponentInjectorAfterError(rendering);
-        }
-        throw error;
+      const componentRef = view.createComponent(rendering.componentImplementation, {
+        environmentInjector: rendering.componentInjector,
+      });
+      componentRef.setInput('rendering', rendering.componentDefinition);
+      if (this._inputs) {
+        this._setComponentInputs(componentRef, this._inputs);
+      }
+      const outputs = this.outputs();
+      if (outputs) {
+        this._subscribeComponentOutputs(componentRef.instance, outputs);
       }
     });
   }

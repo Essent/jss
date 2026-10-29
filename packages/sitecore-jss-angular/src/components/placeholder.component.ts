@@ -61,30 +61,6 @@ export interface FactoryWithData {
   data?: Data;
 }
 
-/**
- * Destroys the injector that provides a lazily loaded standalone component.
- * @param {ComponentFactoryResult['componentInjector']} componentInjector The injector to destroy, if created.
- */
-function destroyComponentInjector(componentInjector?: ComponentFactoryResult['componentInjector']) {
-  if (componentInjector && !componentInjector.destroyed) {
-    componentInjector.destroy();
-  }
-}
-
-/**
- * Destroys injectors for renderings that will not be rendered.
- * @param {ComponentFactoryResult[]} factories The factory results to clean up.
- */
-function destroyComponentInjectorsSafely(factories: ComponentFactoryResult[]) {
-  factories.forEach(({ componentInjector }) => {
-    try {
-      destroyComponentInjector(componentInjector);
-    } catch {
-      // Preserve the error that caused the injector cleanup.
-    }
-  });
-}
-
 @Component({
   selector: 'sc-placeholder,[sc-placeholder]',
   template: `
@@ -372,24 +348,10 @@ export class PlaceholderComponent implements OnInit, OnChanges, DoCheck, OnDestr
       });
       this.isLoading = false;
     } else {
-      let activeFactories: ComponentFactoryResult[] = [];
-      const renderedFactories = new Set<ComponentFactoryResult>();
+      const factories = await this.componentFactory.getComponents(placeholder);
       try {
-        const factories = await this.componentFactory.getComponents(placeholder);
-        activeFactories = factories;
         const nonGuarded = await this.guardResolver(factories);
-        const guardedFactories = new Set(nonGuarded);
-        destroyComponentInjectorsSafely(
-          factories.filter((factory) => !guardedFactories.has(factory))
-        );
-
         const withData = await this.dataResolver(nonGuarded);
-        const dataFactories = new Set(withData.map((rendering) => rendering.factory));
-        destroyComponentInjectorsSafely(
-          nonGuarded.filter((factory) => !dataFactories.has(factory))
-        );
-        activeFactories = withData.map((rendering) => rendering.factory);
-
         // not using index to ensure code blocks are rendered at correct positions
         withData.forEach((rendering) => {
           this.metadataMode &&
@@ -400,14 +362,9 @@ export class PlaceholderComponent implements OnInit, OnChanges, DoCheck, OnDestr
             });
 
           if (this.renderEachTemplate() && !isRawRendering(rendering.factory.componentDefinition)) {
-            try {
-              this._renderTemplatedComponent(rendering.factory.componentDefinition);
-            } finally {
-              destroyComponentInjector(rendering.factory.componentInjector);
-            }
+            this._renderTemplatedComponent(rendering.factory.componentDefinition);
           } else {
             this._renderEmbeddedComponent(rendering.factory, rendering.data);
-            renderedFactories.add(rendering.factory);
           }
 
           this.metadataMode &&
@@ -422,9 +379,6 @@ export class PlaceholderComponent implements OnInit, OnChanges, DoCheck, OnDestr
         this.changeDetectorRef.markForCheck();
         this.loaded.emit(name);
       } catch (e) {
-        destroyComponentInjectorsSafely(
-          activeFactories.filter((factory) => !renderedFactories.has(factory))
-        );
         this.isLoading = false;
         if (e instanceof JssCanActivateRedirectError) {
           const redirectValue = e.redirectValue;
@@ -486,51 +440,30 @@ export class PlaceholderComponent implements OnInit, OnChanges, DoCheck, OnDestr
     const injectorOptions = rendering.componentInjector
       ? { environmentInjector: rendering.componentInjector }
       : { ngModuleRef: rendering.componentModuleRef };
-    let createdComponentRef: ComponentRef<unknown>;
-    try {
-      createdComponentRef = this.view().createComponent(
-        rendering.componentImplementation,
-        injectorOptions
+    const createdComponentRef = this.view().createComponent(
+      rendering.componentImplementation,
+      injectorOptions
+    );
+    if (this.parentStyleAttribute) {
+      this.renderer.setAttribute(
+        createdComponentRef.location.nativeElement,
+        this.parentStyleAttribute,
+        ''
       );
-    } catch (error) {
-      try {
-        destroyComponentInjector(rendering.componentInjector);
-      } catch {
-        // Preserve the component creation error.
-      }
-      throw error;
     }
 
-    createdComponentRef.onDestroy(() => destroyComponentInjector(rendering.componentInjector));
-    try {
-      if (this.parentStyleAttribute) {
-        this.renderer.setAttribute(
-          createdComponentRef.location.nativeElement,
-          this.parentStyleAttribute,
-          ''
-        );
-      }
-
-      const componentInstance = createdComponentRef.instance;
-      createdComponentRef.setInput('rendering', rendering.componentDefinition);
-      if (Object.keys(data).length > 0) {
-        createdComponentRef.setInput('data', data);
-      }
-      if (this._inputs) {
-        this._setComponentInputs(createdComponentRef, this._inputs);
-      }
-      const outputs = this.outputs();
-      if (outputs) {
-        this._subscribeComponentOutputs(componentInstance as { [key: string]: unknown }, outputs);
-      }
-      this._componentRefs.push(createdComponentRef);
-    } catch (error) {
-      try {
-        createdComponentRef.destroy();
-      } catch {
-        // Preserve the component setup error.
-      }
-      throw error;
+    const componentInstance = createdComponentRef.instance;
+    createdComponentRef.setInput('rendering', rendering.componentDefinition);
+    if (Object.keys(data).length > 0) {
+      createdComponentRef.setInput('data', data);
     }
+    if (this._inputs) {
+      this._setComponentInputs(createdComponentRef, this._inputs);
+    }
+    const outputs = this.outputs();
+    if (outputs) {
+      this._subscribeComponentOutputs(componentInstance, outputs);
+    }
+    this._componentRefs.push(createdComponentRef);
   }
 }
