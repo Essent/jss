@@ -1,0 +1,14 @@
+packages/sitecore-jss-angular/package.json
+  h_0937f43903bffb 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6ec98f48ee58ef5040f7ae918c117d36132a1fcd",
+  "prompts": {},
+  "humans": {
+    "h_0937f43903bffb": {
+      "author": "Mark van Lagen <mark@markvlagen.nl>"
+    }
+  }
+}
