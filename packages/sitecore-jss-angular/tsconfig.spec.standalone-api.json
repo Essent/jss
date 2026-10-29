@@ -1,0 +1,18 @@
+{
+  // Specs that compile today. The package build uses the ng-packagr defaults, which are
+  // not strict, so these specs compile the same way. The full spec suite does not
+  // compile on this branch yet.
+  "extends": "./tsconfig.spec.json",
+  "compilerOptions": {
+    "strict": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
+  },
+  "files": [
+    "./src/test.ts",
+    "./src/component-injector-lifecycle.spec.ts",
+    "./src/standalone-provider-api.spec.ts",
+    "./src/services/lazy-component-load-result.spec.ts"
+  ],
+  "include": ["./typings/**/*.d.ts"]
+}

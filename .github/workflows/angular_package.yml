@@ -1,0 +1,40 @@
+name: Angular Package
+
+# Runs for pull requests to every branch, so the Essent fork branches are checked too.
+on:
+  pull_request:
+    paths:
+      - 'packages/sitecore-jss/**'
+      - 'packages/sitecore-jss-angular/**'
+      - '.github/workflows/angular_package.yml'
+      - 'yarn.lock'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.17.1
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Build the Angular package and the workspaces it depends on
+        run: yarn workspaces foreach -vRt --from @sitecore-jss/sitecore-jss-angular run build
+
+      - name: Compile an AOT consumer against the built declarations
+        working-directory: packages/sitecore-jss-angular
+        run: yarn test:aot-consumer
+
+      - name: Run the standalone API specs
+        working-directory: packages/sitecore-jss-angular
+        run: yarn test:standalone-api
+        env:
+          testEnv: ci
