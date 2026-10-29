@@ -437,9 +437,13 @@ export class PlaceholderComponent implements OnInit, OnChanges, DoCheck, OnDestr
     }
     // apply the parent style attribute _ngcontent
     // work-around for https://github.com/angular/angular/issues/12215
-    const createdComponentRef = this.view().createComponent(rendering.componentImplementation, {
-      ngModuleRef: rendering.componentModuleRef,
-    });
+    const injectorOptions = rendering.componentInjector
+      ? { environmentInjector: rendering.componentInjector }
+      : { ngModuleRef: rendering.componentModuleRef };
+    const createdComponentRef = this.view().createComponent(
+      rendering.componentImplementation,
+      injectorOptions
+    );
     if (this.parentStyleAttribute) {
       this.renderer.setAttribute(
         createdComponentRef.location.nativeElement,

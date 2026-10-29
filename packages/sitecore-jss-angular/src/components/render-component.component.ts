@@ -5,6 +5,7 @@ import {
   KeyValueDiffer,
   KeyValueDiffers,
   OnChanges,
+  OnDestroy,
   SimpleChanges,
   Type,
   ViewContainerRef,
@@ -33,7 +34,7 @@ import { isRawRendering } from './rendering';
     <ng-template #view></ng-template>
   `,
 })
-export class RenderComponentComponent implements OnChanges {
+export class RenderComponentComponent implements OnChanges, OnDestroy {
   readonly rendering = input<ComponentRendering | HtmlElementRendering>();
   readonly outputs = input<{
     [k: string]: (eventType: unknown) => void;
@@ -66,6 +67,10 @@ export class RenderComponentComponent implements OnChanges {
     }
   }
 
+  ngOnDestroy() {
+    this.destroyed = true;
+  }
+
   private _setComponentInputs(
     componentRef: ComponentRef<unknown>,
     inputs: { [key: string]: unknown }
@@ -90,13 +95,13 @@ export class RenderComponentComponent implements OnChanges {
       );
   }
 
-  private _render() {
+  private _render(): Promise<void> {
     const view = this.view();
     view.clear();
 
     const renderingValue = this.rendering();
     if (!renderingValue) {
-      return;
+      return Promise.resolve();
     }
 
     const resolveComponent: Promise<ComponentFactoryResult> = isRawRendering(renderingValue)
@@ -106,7 +111,11 @@ export class RenderComponentComponent implements OnChanges {
         })
       : this.componentFactory.getComponent(renderingValue);
 
-    resolveComponent.then((rendering) => {
+    return resolveComponent.then((rendering) => {
+      if (this.destroyed) {
+        return;
+      }
+
       if (!rendering.componentImplementation) {
         const componentName = (rendering.componentDefinition as ComponentRendering).componentName;
         console.error(
@@ -120,7 +129,9 @@ export class RenderComponentComponent implements OnChanges {
         rendering.componentImplementation = this.missingComponentComponent;
       }
 
-      const componentRef = view.createComponent(rendering.componentImplementation);
+      const componentRef = view.createComponent(rendering.componentImplementation, {
+        environmentInjector: rendering.componentInjector,
+      });
       componentRef.setInput('rendering', rendering.componentDefinition);
       if (this._inputs) {
         this._setComponentInputs(componentRef, this._inputs);

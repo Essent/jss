@@ -1,4 +1,4 @@
-import { InjectionToken, Type } from '@angular/core';
+import { EnvironmentProviders, InjectionToken, Type } from '@angular/core';
 import {
   ActivatedRouteSnapshot,
   Data,
@@ -24,15 +24,14 @@ export class ComponentNameAndType {
   resolve?: { [key: string]: JssResolve<unknown> | Type<JssResolve<unknown>> };
 }
 
-/** Registers a lazily loaded component by name and module to lazy load when it's needed */
+/** Registers a lazily loaded component by name. */
 export interface ComponentNameAndModule {
   /** Name of the component */
   path: string;
   /**
-   * Dynamic import of the component,
-   * e.g. () => import('./path/to/lazyloadedcomponent.module').then(m => m.LazyLoadedComponentModuleExportName)
+   * Dynamic import resolving to an NgModule, standalone component, component map, or EnvironmentProviders.
    */
-  loadChildren: () => Promise<Type<unknown>>;
+  loadChildren: () => Promise<LazyComponentLoadResult>;
   canActivate?:
     | JssCanActivate
     | JssCanActivateFn
@@ -40,6 +39,11 @@ export interface ComponentNameAndModule {
     | Array<JssCanActivate | JssCanActivateFn | Type<JssCanActivate>>;
   resolve?: { [key: string]: JssResolve<unknown> | Type<JssResolve<unknown>> };
 }
+
+export type LazyComponentLoadResult =
+  | Type<unknown>
+  | Record<string, Type<unknown>>
+  | EnvironmentProviders;
 
 /**
  * @param {unknown} object
@@ -69,7 +73,7 @@ export const PLACEHOLDER_MISSING_COMPONENT_COMPONENT = new InjectionToken<Type<u
 export const PLACEHOLDER_HIDDEN_RENDERING_COMPONENT = new InjectionToken<Type<unknown>>(
   'Sc.placeholder.hiddenRenderingComponent'
 );
-export const DYNAMIC_COMPONENT = new InjectionToken<Type<unknown> | { [s: string]: unknown }>(
+export const DYNAMIC_COMPONENT = new InjectionToken<Type<unknown> | Record<string, Type<unknown>>>(
   'Sc.placeholder.dynamicComponent'
 );
 
