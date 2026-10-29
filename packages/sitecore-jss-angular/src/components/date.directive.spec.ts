@@ -6,6 +6,7 @@ import { textField as eeTextData } from '../test-data/ee-data';
 import { DateDirective } from './date.directive';
 import { TextField } from './rendering-field';
 import { EMPTY_DATE_FIELD_VALUE } from '@sitecore-jss/sitecore-jss/layout';
+import { JSS_DIRECTIVES } from '../lib.module';
 
 const testDate = new Date('2010-12-12T12:00Z');
 const testIsoDateValue = testDate.toISOString();
@@ -15,15 +16,23 @@ const testFormat = 'M/d/yy, h:mm a';
 const defaultFormattedDate = formatDate(testIsoDateValue, testFormat, testLocale, testTimezone);
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-date',
   template: `
     <span
-      *scDate="field(); editable: editable(); format: format(); locale: locale(); timezone: timezone()"
+      *scDate="
+        field();
+        editable: editable();
+        format: format();
+        locale: locale();
+        timezone: timezone()
+      "
     ></span>
   `,
 })
 class TestComponent {
-  readonly field = input<TextField>(undefined);
+  readonly field = input<TextField | undefined>(undefined);
   readonly editable = input(true);
   readonly format = input(testFormat);
   readonly locale = input(testLocale);
@@ -35,12 +44,14 @@ const emptyDateFieldEditingTemplate =
   '<span>[This is a *custom* empty field component for date]</span>';
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-empty-template-date',
   template: `
     <span
       *scDate="
-        field;
-        editable: editable;
+        field();
+        editable: editable();
         emptyFieldEditingTemplate: ${emptyDateFieldEditingTemplateId}
       "
     ></span>
@@ -61,11 +72,11 @@ class TestEmptyTemplateComponent {
 describe('<span *scDate />', () => {
   let fixture: ComponentFixture<TestComponent>;
   let de: DebugElement;
-  let comp: TestComponent;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [DateDirective, TestComponent, TestEmptyTemplateComponent],
+      declarations: [],
+      imports: [DateDirective, TestComponent, TestEmptyTemplateComponent],
       providers: [DatePipe],
     });
 
@@ -73,7 +84,6 @@ describe('<span *scDate />', () => {
     fixture.detectChanges();
 
     de = fixture.debugElement;
-    comp = fixture.componentInstance;
   });
 
   it('should render nothing with missing field', () => {
@@ -83,7 +93,7 @@ describe('<span *scDate />', () => {
 
   it('should render nothing with missing editable and value', () => {
     const field = {};
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const span = de.query(By.css('span'));
@@ -96,7 +106,7 @@ describe('<span *scDate />', () => {
       editable: 'editable',
     };
 
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
     const rendered = de.query(By.css('span')).nativeElement.innerHTML;
     expect(rendered).toBe('editable');
@@ -107,8 +117,8 @@ describe('<span *scDate />', () => {
       value: testIsoDateValue,
       editable: 'editable',
     };
-    comp.field = field;
-    comp.editable = false;
+    fixture.componentRef.setInput('field', field);
+    fixture.componentRef.setInput('editable', false);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('span')).nativeElement.innerHTML;
@@ -119,7 +129,7 @@ describe('<span *scDate />', () => {
     const field = {
       value: testIsoDateValue,
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('span')).nativeElement.innerHTML;
@@ -130,7 +140,7 @@ describe('<span *scDate />', () => {
     const field = {
       editable: eeTextData,
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('span')).nativeElement.innerHTML;
@@ -156,7 +166,7 @@ describe('<span *scDate />', () => {
         value: '',
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -170,7 +180,7 @@ describe('<span *scDate />', () => {
         value: EMPTY_DATE_FIELD_VALUE,
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -184,13 +194,12 @@ describe('<span *scDate />', () => {
       fixture.detectChanges();
 
       de = fixture.debugElement;
-      comp = fixture.componentInstance;
 
       const field = {
         value: '',
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -202,13 +211,12 @@ describe('<span *scDate />', () => {
       fixture.detectChanges();
 
       de = fixture.debugElement;
-      comp = fixture.componentInstance;
 
       const field = {
         value: EMPTY_DATE_FIELD_VALUE,
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -220,8 +228,8 @@ describe('<span *scDate />', () => {
         value: '',
         metadata: testMetadata,
       };
-      comp.field = field;
-      comp.editable = false;
+      fixture.componentRef.setInput('field', field);
+      fixture.componentRef.setInput('editable', false);
       fixture.detectChanges();
 
       const span = de.query(By.css('span'));
@@ -235,8 +243,8 @@ describe('<span *scDate />', () => {
             metadata: { foo: 'bar' },
             value: testIsoDateValue,
           };
-          comp.editable = true;
-          comp.field = field;
+          fixture.componentRef.setInput('editable', true);
+          fixture.componentRef.setInput('field', field);
           fixture.detectChanges();
 
           const fieldValue = de.query(By.css('span'));
@@ -256,8 +264,8 @@ describe('<span *scDate />', () => {
             metadata: { foo: 'bar' },
             value: '',
           };
-          comp.editable = true;
-          comp.field = field;
+          fixture.componentRef.setInput('editable', true);
+          fixture.componentRef.setInput('field', field);
           fixture.detectChanges();
 
           const fieldValue = de.query(
@@ -281,8 +289,8 @@ describe('<span *scDate />', () => {
             metadata: { foo: 'bar' },
             value: testIsoDateValue,
           };
-          comp.editable = false;
-          comp.field = field;
+          fixture.componentRef.setInput('editable', false);
+          fixture.componentRef.setInput('field', field);
           fixture.detectChanges();
 
           const dateField = de.query(By.css('span'));
@@ -300,8 +308,8 @@ describe('<span *scDate />', () => {
         const field = {
           value: testIsoDateValue,
         };
-        comp.editable = true;
-        comp.field = field;
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('field', field);
         fixture.detectChanges();
 
         const dateField = de.query(By.css('span'));

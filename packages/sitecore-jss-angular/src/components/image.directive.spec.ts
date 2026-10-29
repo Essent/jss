@@ -5,19 +5,24 @@ import { By } from '@angular/platform-browser';
 import { imageField as eeImageData } from '../test-data/ee-data';
 import { ImageDirective } from './image.directive';
 import { ImageField } from './rendering-field';
+import { JSS_DIRECTIVES } from '../lib.module';
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-image',
   template: `
     <img class="some" id="another" *scImage="field(); editable: editable()" />
   `,
 })
 class TestComponent {
-  readonly field = input<ImageField | ''>(undefined);
+  readonly field = input<ImageField | '' | undefined>(undefined);
   readonly editable = input(true);
 }
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-image2',
   template: `
     <img
@@ -34,15 +39,15 @@ class TestComponent {
   `,
 })
 class AnotherTestComponent {
-  readonly field = input<ImageField>(undefined);
+  readonly field = input<ImageField | undefined>(undefined);
   readonly editable = input(true);
   readonly params = input<{
     [param: string]: string | number;
-}>({});
+  }>({});
   readonly imageAttrs = input<{
     [param: string]: unknown;
-}>({});
-  readonly mediaUrlPrefix = input<RegExp>(undefined);
+  }>({});
+  readonly mediaUrlPrefix = input<RegExp | undefined>(undefined);
 }
 
 const emptyImageFieldEditingTemplateId = 'emptyImageFieldEditingTemplate';
@@ -51,14 +56,16 @@ const emptyImageFieldEditingTemplateDefaultTestString =
   'M174,54c7.17,0,13,5.83,13,13s-5.83,13-13,13s-13-5.83-13-13S166.83,54,174,54 M174,52 c-8.28,0-15,6.72-15,15s6.72,15,15,15s15-6.72,15-15S182.28,52,174,52L174,52z';
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-empty-template-image',
   template: `
     <img
       class="some"
       id="another"
       *scImage="
-        field;
-        editable: editable;
+        field();
+        editable: editable();
         emptyFieldEditingTemplate: ${emptyImageFieldEditingTemplateId}
       "
     />
@@ -74,24 +81,18 @@ class TestEmptyTemplateComponent {
 }
 
 describe('<img *scImage />', () => {
-  let fixture: ComponentFixture<TestComponent>;
+  let fixture: ComponentFixture<TestComponent> | ComponentFixture<TestEmptyTemplateComponent>;
   let de: DebugElement;
-  let comp: TestComponent;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [
-        ImageDirective,
-        TestComponent,
-        AnotherTestComponent,
-        TestEmptyTemplateComponent,
-      ],
+      declarations: [],
+      imports: [ImageDirective, TestComponent, AnotherTestComponent, TestEmptyTemplateComponent],
     });
 
     fixture = TestBed.createComponent(TestComponent);
     de = fixture.debugElement;
 
-    comp = fixture.componentInstance;
     fixture.detectChanges();
   });
 
@@ -103,7 +104,7 @@ describe('<img *scImage />', () => {
         height: 10,
       };
 
-      comp.field = media;
+      fixture.componentRef.setInput('field', media);
       fixture.detectChanges();
       const img = de.query(By.css('img')).nativeElement;
 
@@ -117,7 +118,7 @@ describe('<img *scImage />', () => {
         src: '/assets/img/test0.png',
       };
 
-      comp.field = media;
+      fixture.componentRef.setInput('field', media);
       fixture.detectChanges();
 
       const img = de.query(By.css('img')).nativeElement;
@@ -133,7 +134,7 @@ describe('<img *scImage />', () => {
           alt: 'my image',
         },
       };
-      comp.field = media;
+      fixture.componentRef.setInput('field', media);
       fixture.detectChanges();
 
       const img = de.query(By.css('img')).nativeElement;
@@ -148,7 +149,7 @@ describe('<img *scImage />', () => {
           src: '/assets/img/test0.png',
         },
       };
-      comp.field = media;
+      fixture.componentRef.setInput('field', media);
       fixture.detectChanges();
 
       const img = de.query(By.css('img')).nativeElement;
@@ -162,7 +163,7 @@ describe('<img *scImage />', () => {
         editable: eeImageData,
       };
 
-      comp.field = media;
+      fixture.componentRef.setInput('field', media);
       fixture.detectChanges();
 
       const img = de.nativeElement.querySelector('.sc-image-wrapper');
@@ -176,7 +177,7 @@ describe('<img *scImage />', () => {
         editable: eeImageData,
       };
 
-      comp.field = media;
+      fixture.componentRef.setInput('field', media);
       fixture.detectChanges();
 
       const img = de.nativeElement.getElementsByTagName('img')[0];
@@ -187,7 +188,7 @@ describe('<img *scImage />', () => {
 
   describe('with complex inputs and overrides', () => {
     let fixture2: ComponentFixture<AnotherTestComponent>;
-    let comp2: AnotherTestComponent;
+
     const media = {
       value: {
         src: '/-/media/assets/img/test0.png',
@@ -212,16 +213,16 @@ describe('<img *scImage />', () => {
     beforeEach(() => {
       fixture2 = TestBed.createComponent(AnotherTestComponent);
       de = fixture2.debugElement;
-      comp2 = fixture2.componentInstance;
+
       fixture2.detectChanges();
 
-      comp2.params = imageParams;
-      comp2.imageAttrs = imageAttrs;
+      fixture2.componentRef.setInput('params', imageParams);
+      fixture2.componentRef.setInput('imageAttrs', imageAttrs);
       fixture2.detectChanges();
     });
 
     it('should render img with addtional props', () => {
-      comp2.field = media;
+      fixture2.componentRef.setInput('field', media);
       fixture2.detectChanges();
 
       const img = de.nativeElement.getElementsByTagName('img')[0];
@@ -230,7 +231,7 @@ describe('<img *scImage />', () => {
     });
 
     it('should render img with style prop', () => {
-      comp2.field = media;
+      fixture2.componentRef.setInput('field', media);
       fixture2.detectChanges();
 
       const img = de.nativeElement.getElementsByTagName('img')[0];
@@ -239,7 +240,7 @@ describe('<img *scImage />', () => {
     });
 
     it('should render img with addtional props in EE mode', () => {
-      comp2.field = eeMedia;
+      fixture2.componentRef.setInput('field', eeMedia);
       fixture2.detectChanges();
 
       const img = de.nativeElement.getElementsByTagName('img')[0];
@@ -248,7 +249,7 @@ describe('<img *scImage />', () => {
     });
 
     it('should update image url', () => {
-      comp2.field = media;
+      fixture2.componentRef.setInput('field', media);
       fixture2.detectChanges();
 
       const img = de.nativeElement.getElementsByTagName('img')[0];
@@ -260,7 +261,7 @@ describe('<img *scImage />', () => {
     });
 
     it('should update image url in EE mode', () => {
-      comp2.field = eeMedia;
+      fixture2.componentRef.setInput('field', eeMedia);
       fixture2.detectChanges();
 
       const img = de.nativeElement.getElementsByTagName('img')[0];
@@ -282,41 +283,41 @@ describe('<img *scImage />', () => {
         expect(url.searchParams.get('hash')).toBeNull();
       };
 
-      comp2.mediaUrlPrefix = /\/([-~]{1})test\//i;
-      comp2.field = {
+      fixture2.componentRef.setInput('mediaUrlPrefix', /\/([-~]{1})test\//i);
+      fixture2.componentRef.setInput('field', {
         value: {
           src: '/-test/assets/img/test0.png',
           alt: 'my image',
           height: '650',
           width: '300',
         },
-      };
+      });
 
       fixture2.detectChanges();
 
       testImg('/-/jssmedia/');
 
-      comp2.field = {
+      fixture2.componentRef.setInput('field', {
         value: {
           src: '/~test/assets/img/test0.png',
           alt: 'my image',
           height: '650',
           width: '300',
         },
-      };
+      });
 
       fixture2.detectChanges();
 
       testImg('/~/jssmedia/');
 
-      comp2.field = {
+      fixture2.componentRef.setInput('field', {
         value: {
           src: '/-invalid/assets/img/test0.png',
           alt: 'my image',
           height: '650',
           width: '300',
         },
-      };
+      });
 
       fixture2.detectChanges();
 
@@ -333,39 +334,39 @@ describe('<img *scImage />', () => {
         );
       };
 
-      comp2.imageAttrs = {
+      fixture2.componentRef.setInput('imageAttrs', {
         srcSet: [{ mw: 100 }, { mw: 300 }],
-      };
-      comp2.mediaUrlPrefix = /\/([-~]{1})test\//i;
+      });
+      fixture2.componentRef.setInput('mediaUrlPrefix', /\/([-~]{1})test\//i);
 
-      comp2.field = {
+      fixture2.componentRef.setInput('field', {
         value: {
           src: '/-test/assets/img/test0.png',
           alt: 'my image',
         },
-      };
+      });
 
       fixture2.detectChanges();
 
       testImg('/-/jssmedia/');
 
-      comp2.field = {
+      fixture2.componentRef.setInput('field', {
         value: {
           src: '/~test/assets/img/test0.png',
           alt: 'my image',
         },
-      };
+      });
 
       fixture2.detectChanges();
 
       testImg('/~/jssmedia/');
 
-      comp2.field = {
+      fixture2.componentRef.setInput('field', {
         value: {
           src: '/~invalid/assets/img/test0.png',
           alt: 'my image',
         },
-      };
+      });
 
       fixture2.detectChanges();
 
@@ -382,8 +383,8 @@ describe('<img *scImage />', () => {
           alt: 'my image',
         },
       };
-      comp.editable = false;
-      comp.field = media;
+      fixture.componentRef.setInput('editable', false);
+      fixture.componentRef.setInput('field', media);
       fixture.detectChanges();
 
       const img = de.query(By.css('img')).nativeElement;
@@ -411,7 +412,7 @@ describe('<img *scImage />', () => {
         value: { src: undefined },
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -423,7 +424,7 @@ describe('<img *scImage />', () => {
         src: undefined,
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -435,13 +436,12 @@ describe('<img *scImage />', () => {
       fixture.detectChanges();
 
       de = fixture.debugElement;
-      comp = fixture.componentInstance;
 
       const field = {
         value: { src: undefined },
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -453,13 +453,12 @@ describe('<img *scImage />', () => {
       fixture.detectChanges();
 
       de = fixture.debugElement;
-      comp = fixture.componentInstance;
 
       const field = {
         src: undefined,
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -471,8 +470,8 @@ describe('<img *scImage />', () => {
         value: { src: undefined },
         metadata: testMetadata,
       };
-      comp.field = field;
-      comp.editable = false;
+      fixture.componentRef.setInput('field', field);
+      fixture.componentRef.setInput('editable', false);
       fixture.detectChanges();
 
       expect(de.children.length).toBe(0);
@@ -483,8 +482,8 @@ describe('<img *scImage />', () => {
         src: undefined,
         metadata: testMetadata,
       };
-      comp.field = field;
-      comp.editable = false;
+      fixture.componentRef.setInput('field', field);
+      fixture.componentRef.setInput('editable', false);
       fixture.detectChanges();
 
       expect(de.children.length).toBe(0);
@@ -500,8 +499,8 @@ describe('<img *scImage />', () => {
               alt: 'my image',
             },
           };
-          comp.editable = true;
-          comp.field = media;
+          fixture.componentRef.setInput('editable', true);
+          fixture.componentRef.setInput('field', media);
           fixture.detectChanges();
 
           const img = de.query(By.css('img')).nativeElement as HTMLElement;
@@ -522,8 +521,8 @@ describe('<img *scImage />', () => {
             metadata: { foo: 'bar' },
             value: { src: undefined },
           };
-          comp.editable = true;
-          comp.field = field;
+          fixture.componentRef.setInput('editable', true);
+          fixture.componentRef.setInput('field', field);
           fixture.detectChanges();
 
           const fieldValue = de.query(By.css('[sc-default-empty-image-field-editing-placeholder]'));
@@ -548,8 +547,8 @@ describe('<img *scImage />', () => {
               alt: 'my image',
             },
           };
-          comp.editable = false;
-          comp.field = media;
+          fixture.componentRef.setInput('editable', false);
+          fixture.componentRef.setInput('field', media);
           fixture.detectChanges();
 
           const img = de.query(By.css('img')).nativeElement as HTMLElement;
@@ -571,8 +570,8 @@ describe('<img *scImage />', () => {
             alt: 'my image',
           },
         };
-        comp.editable = true;
-        comp.field = media;
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('field', media);
         fixture.detectChanges();
 
         const img = de.query(By.css('img')).nativeElement as HTMLElement;
@@ -588,7 +587,7 @@ describe('<img *scImage />', () => {
 
   it('should render no <img /> when media prop is empty', () => {
     const img = '';
-    comp.field = img;
+    fixture.componentRef.setInput('field', img);
     fixture.detectChanges();
 
     expect(de.children.length).toBe(0);

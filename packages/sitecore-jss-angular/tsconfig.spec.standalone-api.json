@@ -1,7 +1,6 @@
 {
-  // Specs that compile today. The package build uses the ng-packagr defaults, which are
-  // not strict, so these specs compile the same way. The full spec suite does not
-  // compile on this branch yet.
+  // CI runs only these specs. They compile non-strict, the same as the package build
+  // (tsconfig.lib.json).
   "extends": "./tsconfig.spec.json",
   "compilerOptions": {
     "strict": false,

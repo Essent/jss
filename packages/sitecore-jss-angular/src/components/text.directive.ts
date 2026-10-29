@@ -16,7 +16,7 @@ import { TextField } from './rendering-field';
 @Directive({
   selector: '[scText]',
 })
-export class TextDirective extends BaseFieldDirective implements OnChanges {
+export class TextDirective extends BaseFieldDirective<TextField> implements OnChanges {
   readonly editable = input(true, { alias: 'scTextEditable' });
 
   readonly encode = input(true, { alias: 'scTextEncode' });
@@ -48,12 +48,12 @@ export class TextDirective extends BaseFieldDirective implements OnChanges {
   }
 
   private updateView() {
-    if (!this.shouldRender()) {
+    const field = this.field();
+    if (!field || !this.shouldRender()) {
       super.renderEmpty();
       return;
     }
 
-    const field = this.field();
     this.renderMetadata(MetadataKind.Open);
     this.viewRef = this.viewContainer.createEmbeddedView(this.templateRef);
     this.renderMetadata(MetadataKind.Close);

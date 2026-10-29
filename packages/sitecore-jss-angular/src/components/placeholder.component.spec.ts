@@ -1,4 +1,4 @@
-import { Location } from '@angular/common';
+import { Location, NgTemplateOutlet } from '@angular/common';
 import {
   Component,
   DebugElement,
@@ -31,8 +31,39 @@ import {
 } from '../test-data/non-ee-data';
 import { cleanHtml } from '../test-utils';
 import { MissingComponentComponent } from './missing-component.component';
+import { PlaceholderComponent } from './placeholder.component';
+import { TextDirective } from './text.directive';
+import { JSS_DIRECTIVES } from '../lib.module';
+
+/**
+ * Waits until lazily loaded placeholder components finish rendering.
+ * @param {ComponentFixture<T>} fixture The fixture whose placeholder rendering to await.
+ */
+async function waitForAsyncRender<T>(fixture: ComponentFixture<T>) {
+  let previousPlaceholderCount = -1;
+  let stablePasses = 0;
+  for (let attempt = 0; attempt < 20; attempt++) {
+    await fixture.whenStable();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    fixture.changeDetectorRef.detectChanges();
+
+    const placeholders = fixture.debugElement.queryAll(By.directive(PlaceholderComponent));
+    const allPlaceholdersLoaded = placeholders.every(
+      (placeholder) => !placeholder.componentInstance.isLoading
+    );
+    if (allPlaceholdersLoaded && placeholders.length === previousPlaceholderCount) {
+      stablePasses++;
+      if (stablePasses === 2) return;
+    } else {
+      stablePasses = 0;
+    }
+    previousPlaceholderCount = placeholders.length;
+  }
+}
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-placeholder',
   template: `
     <sc-placeholder [name]="name()" [rendering]="rendering()">
@@ -41,8 +72,8 @@ import { MissingComponentComponent } from './missing-component.component';
   `,
 })
 class TestPlaceholderComponent {
-  readonly rendering = input<ComponentRendering>(undefined);
-  readonly name = input<string>(undefined);
+  readonly rendering = input<ComponentRendering | undefined>(undefined);
+  readonly name = input<string | undefined>(undefined);
   readonly data = input<unknown>();
 }
 
@@ -59,6 +90,8 @@ class TestDownloadCalloutComponent {
 }
 
 @Component({
+  standalone: true,
+  imports: [PlaceholderComponent],
   selector: 'test-home',
   styles: ['sc-placeholder[name="page-content"] { background-color: red }'],
   template: `
@@ -72,6 +105,7 @@ class TestHomeComponent {
 }
 
 @Component({
+  standalone: true,
   selector: 'test-jumbotron',
   template: '',
 })
@@ -88,9 +122,11 @@ describe('<sc-placeholder />', () => {
   beforeEach(
     waitForAsync(() => {
       TestBed.configureTestingModule({
-        declarations: [TestPlaceholderComponent, TestHomeComponent, TestJumbotronComponent],
+        declarations: [],
         imports: [
           TestDownloadCalloutComponent,
+          TestHomeComponent,
+          TestJumbotronComponent,
           RouterTestingModule,
           JssModule.withComponents(
             [
@@ -108,6 +144,7 @@ describe('<sc-placeholder />', () => {
               },
             ]
           ),
+          TestPlaceholderComponent,
         ],
         providers: [JssStateService],
       }).compileComponents();
@@ -146,12 +183,11 @@ describe('<sc-placeholder />', () => {
           const component = (dataSet.data.sitecore.route.placeholders
             .main as ComponentRendering[]).find((c) => c.componentName);
           const phKey = 'page-content';
-          comp.name = phKey;
-          comp.rendering = component!;
+          fixture.componentRef.setInput('name', phKey);
+          fixture.componentRef.setInput('rendering', component!);
           fixture.detectChanges();
 
-          await fixture.whenStable();
-          fixture.detectChanges();
+          await waitForAsyncRender(fixture);
 
           const downloadCallout = de.query(By.directive(TestDownloadCalloutComponent));
           expect(downloadCallout).not.toBeNull();
@@ -171,17 +207,15 @@ describe('<sc-placeholder />', () => {
         waitForAsync(async () => {
           const component = dataSet.data.sitecore.route;
           const phKey = 'main';
-          comp.name = phKey;
-          comp.rendering = (component as unknown) as ComponentRendering;
+          fixture.componentRef.setInput('name', phKey);
+          fixture.componentRef.setInput('rendering', (component as unknown) as ComponentRendering);
           fixture.detectChanges();
 
           // because nested placeholders result in additional async loading _after_ whenStable,
           // we have to check for stability AGAIN internally
-          await fixture.whenStable();
-          fixture.detectChanges();
+          await waitForAsyncRender(fixture);
 
-          await fixture.whenStable();
-          fixture.detectChanges();
+          await waitForAsyncRender(fixture);
 
           const downloadCallout = de.query(By.directive(TestDownloadCalloutComponent));
           expect(downloadCallout).not.toBeNull();
@@ -197,12 +231,11 @@ describe('<sc-placeholder />', () => {
       const component = eeData.sitecore.route;
       const phKey = 'main';
 
-      comp.name = phKey;
-      comp.rendering = (component as unknown) as ComponentRendering;
+      fixture.componentRef.setInput('name', phKey);
+      fixture.componentRef.setInput('rendering', (component as unknown) as ComponentRendering);
       fixture.detectChanges();
 
-      await fixture.whenStable();
-      fixture.detectChanges();
+      await waitForAsyncRender(fixture);
 
       const eeChrome = de.nativeElement.querySelector(
         `[chrometype="placeholder"][kind="open"][id="${phKey}"]`
@@ -220,12 +253,11 @@ describe('<sc-placeholder />', () => {
     waitForAsync(async () => {
       const component = nonEeDevData.sitecore.route;
       const phKey = 'main';
-      comp.name = phKey;
-      comp.rendering = (component as unknown) as ComponentRendering;
+      fixture.componentRef.setInput('name', phKey);
+      fixture.componentRef.setInput('rendering', (component as unknown) as ComponentRendering);
       fixture.detectChanges();
 
-      await fixture.whenStable();
-      fixture.detectChanges();
+      await waitForAsyncRender(fixture);
 
       // let's grab the style name from the parent
       let parentKey = '';
@@ -236,8 +268,7 @@ describe('<sc-placeholder />', () => {
         parentKey = parentAttribute.replace('_nghost-', '');
       }
 
-      await fixture.whenStable();
-      fixture.detectChanges();
+      await waitForAsyncRender(fixture);
 
       const downloadCallout = de.query(By.directive(TestDownloadCalloutComponent));
       expect(downloadCallout.nativeElement.attributes.item(0).name).toEqual(
@@ -263,12 +294,11 @@ describe('<sc-placeholder />', () => {
         },
       };
 
-      comp.name = phKey;
-      comp.rendering = (route as unknown) as ComponentRendering;
+      fixture.componentRef.setInput('name', phKey);
+      fixture.componentRef.setInput('rendering', (route as unknown) as ComponentRendering);
       fixture.detectChanges();
 
-      await fixture.whenStable();
-      fixture.detectChanges();
+      await waitForAsyncRender(fixture);
 
       expect(de.children.length).toBe(1);
 
@@ -294,12 +324,11 @@ describe('<sc-placeholder />', () => {
         },
       };
 
-      comp.name = phKey;
-      comp.rendering = (route as unknown) as ComponentRendering;
+      fixture.componentRef.setInput('name', phKey);
+      fixture.componentRef.setInput('rendering', (route as unknown) as ComponentRendering);
       fixture.detectChanges();
 
-      await fixture.whenStable();
-      fixture.detectChanges();
+      await waitForAsyncRender(fixture);
 
       expect(de.children.length).toBe(1);
 
@@ -322,12 +351,11 @@ describe('<sc-placeholder />', () => {
         },
       };
 
-      comp.name = phKey;
-      comp.rendering = (route as unknown) as ComponentRendering;
+      fixture.componentRef.setInput('name', phKey);
+      fixture.componentRef.setInput('rendering', (route as unknown) as ComponentRendering);
       fixture.detectChanges();
 
-      await fixture.whenStable();
-      fixture.detectChanges();
+      await waitForAsyncRender(fixture);
 
       const element = de.query(By.css('sc-placeholder')).nativeElement;
       expect(element.children.length).toBe(0);
@@ -336,6 +364,8 @@ describe('<sc-placeholder />', () => {
 });
 
 @Component({
+  standalone: true,
+  imports: [PlaceholderComponent],
   selector: 'test-parent',
   template: `
     <sc-placeholder
@@ -348,9 +378,9 @@ describe('<sc-placeholder />', () => {
   `,
 })
 class TestParentComponent {
-  readonly rendering = input<ComponentRendering>(undefined);
+  readonly rendering = input<ComponentRendering | undefined>(undefined);
   readonly data = input<unknown>();
-  readonly name = input<string>(undefined);
+  readonly name = input<string | undefined>(undefined);
   clickMessage = '';
   public inputs = {
     childMessage: '',
@@ -367,6 +397,7 @@ class TestParentComponent {
 }
 
 @Component({
+  standalone: true,
   selector: 'test-child',
   template: `
     {{ childMessage() }}
@@ -389,12 +420,12 @@ class TestChildComponent {
 describe('<sc-placeholder /> with input/output binding', () => {
   let fixture: ComponentFixture<TestParentComponent>;
   let de: DebugElement;
-  let comp: TestParentComponent;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [TestParentComponent, TestChildComponent],
       imports: [
+        TestParentComponent,
+        TestChildComponent,
         RouterTestingModule,
         JssModule.withComponents([
           { name: 'Parent', type: TestParentComponent },
@@ -407,7 +438,6 @@ describe('<sc-placeholder /> with input/output binding', () => {
     fixture = TestBed.createComponent(TestParentComponent);
     de = fixture.debugElement;
 
-    comp = fixture.componentInstance;
     fixture.detectChanges();
   });
 
@@ -418,7 +448,7 @@ describe('<sc-placeholder /> with input/output binding', () => {
       const functionResult = 42;
       const changedMessage = 'ipsum';
 
-      comp.rendering = ({
+      fixture.componentRef.setInput('rendering', ({
         placeholders: {
           children: [
             {
@@ -426,18 +456,17 @@ describe('<sc-placeholder /> with input/output binding', () => {
             },
           ],
         },
-      } as unknown) as ComponentRendering;
-      comp.name = 'children';
-      comp.childMessage = expectedMessage;
+      } as unknown) as ComponentRendering);
+      fixture.componentRef.setInput('name', 'children');
+      fixture.componentRef.setInput('childMessage', expectedMessage);
       fixture.detectChanges();
 
-      await fixture.whenStable();
-      fixture.detectChanges();
+      await waitForAsyncRender(fixture);
 
       const childComponent = de.query(By.directive(TestChildComponent));
       expect(childComponent.nativeElement.innerHTML).toContain(expectedMessage);
       expect(childComponent.nativeElement.innerHTML).toContain(functionResult);
-      comp.childMessage = changedMessage;
+      fixture.componentRef.setInput('childMessage', changedMessage);
       fixture.detectChanges();
       expect(childComponent.nativeElement.innerHTML).toContain(changedMessage);
     })
@@ -448,7 +477,7 @@ describe('<sc-placeholder /> with input/output binding', () => {
     waitForAsync(async () => {
       const expectedMessage = 'lorem';
 
-      comp.rendering = ({
+      fixture.componentRef.setInput('rendering', ({
         placeholders: {
           children: [
             {
@@ -462,13 +491,12 @@ describe('<sc-placeholder /> with input/output binding', () => {
             },
           ],
         },
-      } as unknown) as ComponentRendering;
-      comp.name = 'children';
-      comp.childMessage = expectedMessage;
+      } as unknown) as ComponentRendering);
+      fixture.componentRef.setInput('name', 'children');
+      fixture.componentRef.setInput('childMessage', expectedMessage);
       fixture.detectChanges();
 
-      await fixture.whenStable();
-      fixture.detectChanges();
+      await waitForAsyncRender(fixture);
 
       const childComponents = de.queryAll(By.directive(TestChildComponent));
       expect(childComponents.length).toBe(3);
@@ -481,7 +509,7 @@ describe('<sc-placeholder /> with input/output binding', () => {
   it(
     'should bind outputs to children',
     waitForAsync(async () => {
-      comp.rendering = ({
+      fixture.componentRef.setInput('rendering', ({
         placeholders: {
           children: [
             {
@@ -489,11 +517,10 @@ describe('<sc-placeholder /> with input/output binding', () => {
             },
           ],
         },
-      } as unknown) as ComponentRendering;
-      comp.name = 'children';
+      } as unknown) as ComponentRendering);
+      fixture.componentRef.setInput('name', 'children');
       fixture.detectChanges();
-      await fixture.whenStable();
-      fixture.detectChanges();
+      await waitForAsyncRender(fixture);
 
       const button = de.query(By.css('button'));
       button.nativeElement.click();
@@ -505,6 +532,8 @@ describe('<sc-placeholder /> with input/output binding', () => {
 });
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-lazy-placeholder',
   template: `
     <sc-placeholder
@@ -518,7 +547,7 @@ describe('<sc-placeholder /> with input/output binding', () => {
   `,
 })
 class TestLazyPlaceholderComponent {
-  readonly rendering = input<ComponentRendering>(undefined);
+  readonly rendering = input<ComponentRendering | undefined>(undefined);
   loaded: string | undefined;
   failed: Error | undefined;
 }
@@ -542,6 +571,8 @@ class MockRedirectCommandGuard implements JssCanActivate {
 }
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'not-found',
   template: `
     404
@@ -584,7 +615,7 @@ describe('<sc-placeholder /> with lazy loaded modules', () => {
   beforeEach(
     waitForAsync(() => {
       TestBed.configureTestingModule({
-        declarations: [TestLazyPlaceholderComponent, NotFoundComponent],
+        declarations: [],
         imports: [
           RouterTestingModule.withRoutes([{ path: '404', component: NotFoundComponent }]),
           JssModule.withComponents(
@@ -626,6 +657,8 @@ describe('<sc-placeholder /> with lazy loaded modules', () => {
               },
             ]
           ),
+          TestLazyPlaceholderComponent,
+          NotFoundComponent,
         ],
         providers: [MockUrlTreeGuard, MockRedirectCommandGuard, MockUnexpectedErrorGuard],
       }).compileComponents();
@@ -655,13 +688,11 @@ describe('<sc-placeholder /> with lazy loaded modules', () => {
       it(
         'should render a Jumbotron in placeholder',
         waitForAsync(async () => {
-          comp.rendering = dataSet.data;
+          fixture.componentRef.setInput('rendering', dataSet.data);
 
-          await fixture.whenStable();
-          fixture.detectChanges();
+          await waitForAsyncRender(fixture);
 
-          await fixture.whenStable();
-          fixture.detectChanges();
+          await waitForAsyncRender(fixture);
 
           const jumbotron = de.query(By.directive(LazyComponent));
           expect(jumbotron).not.toBeNull();
@@ -679,13 +710,11 @@ describe('<sc-placeholder /> with lazy loaded modules', () => {
       it(
         'should navigate to url',
         waitForAsync(async () => {
-          comp.rendering = dataSet.data;
+          fixture.componentRef.setInput('rendering', dataSet.data);
 
-          await fixture.whenStable();
-          fixture.detectChanges();
+          await waitForAsyncRender(fixture);
 
-          await fixture.whenStable();
-          fixture.detectChanges();
+          await waitForAsyncRender(fixture);
 
           const location = TestBed.inject(Location);
           expect(location.path()).toBe('/404');
@@ -698,13 +727,11 @@ describe('<sc-placeholder /> with lazy loaded modules', () => {
       it(
         'should emit failure',
         waitForAsync(async () => {
-          comp.rendering = dataSet.data;
+          fixture.componentRef.setInput('rendering', dataSet.data);
 
-          await fixture.whenStable();
-          fixture.detectChanges();
+          await waitForAsyncRender(fixture);
 
-          await fixture.whenStable();
-          fixture.detectChanges();
+          await waitForAsyncRender(fixture);
 
           expect(comp.failed).toEqual(new Error('something broke'));
         })
@@ -714,6 +741,8 @@ describe('<sc-placeholder /> with lazy loaded modules', () => {
 });
 
 @Component({
+  standalone: true,
+  imports: [NgTemplateOutlet, TextDirective],
   selector: 'test-rich-text',
   template: `
     <ng-template #default>
@@ -731,11 +760,11 @@ describe('<sc-placeholder /> with lazy loaded modules', () => {
   `,
 })
 class TestRichTextComponent {
-  readonly rendering = input<ComponentRendering>();
+  readonly rendering = input.required<ComponentRendering>();
   readonly data = input<unknown>();
   readonly defaultVariant = viewChild<TemplateRef<any>>('default');
   readonly withTitleVariant = viewChild<TemplateRef<any>>('withTitle');
-  public get variant(): TemplateRef<any> {
+  public get variant(): TemplateRef<any> | undefined {
     return this.rendering().params?.FieldNames === 'WithTitle'
       ? this.withTitleVariant()
       : this.defaultVariant();
@@ -745,15 +774,16 @@ class TestRichTextComponent {
 describe('SXA components', () => {
   let fixture: ComponentFixture<TestPlaceholderComponent>;
   let de: DebugElement;
-  let comp: TestPlaceholderComponent;
 
   beforeEach(
     waitForAsync(() => {
       TestBed.configureTestingModule({
-        declarations: [TestPlaceholderComponent, TestRichTextComponent],
+        declarations: [],
         imports: [
+          TestRichTextComponent,
           RouterTestingModule,
           JssModule.withComponents([{ name: 'RichText', type: TestRichTextComponent }]),
+          TestPlaceholderComponent,
         ],
         providers: [JssStateService],
       });
@@ -761,7 +791,6 @@ describe('SXA components', () => {
       fixture = TestBed.createComponent(TestPlaceholderComponent);
       de = fixture.debugElement;
 
-      comp = fixture.componentInstance;
       fixture.detectChanges();
     })
   );
@@ -771,12 +800,11 @@ describe('SXA components', () => {
     waitForAsync(async () => {
       const component = sxaRenderingData.sitecore.route;
       const phKey = 'main';
-      comp.name = phKey;
-      comp.rendering = (component as unknown) as ComponentRendering;
+      fixture.componentRef.setInput('name', phKey);
+      fixture.componentRef.setInput('rendering', (component as unknown) as ComponentRendering);
       fixture.detectChanges();
 
-      await fixture.whenStable();
-      fixture.detectChanges();
+      await waitForAsyncRender(fixture);
 
       expect(de.children.length).toBe(1);
 
@@ -805,12 +833,11 @@ describe('SXA components', () => {
     waitForAsync(async () => {
       const component = sxaRenderingData.sitecore.route;
       const phKey = 'main-second';
-      comp.name = phKey;
-      comp.rendering = (component as unknown) as ComponentRendering;
+      fixture.componentRef.setInput('name', phKey);
+      fixture.componentRef.setInput('rendering', (component as unknown) as ComponentRendering);
       fixture.detectChanges();
 
-      await fixture.whenStable();
-      fixture.detectChanges();
+      await waitForAsyncRender(fixture);
 
       expect(de.children.length).toBe(1);
 
@@ -835,12 +862,11 @@ describe('SXA components', () => {
     waitForAsync(async () => {
       const component = sxaRenderingDynamicPlaceholderData.sitecore.route;
       const phKey = 'container-1';
-      comp.name = phKey;
-      comp.rendering = (component as unknown) as ComponentRendering;
+      fixture.componentRef.setInput('name', phKey);
+      fixture.componentRef.setInput('rendering', (component as unknown) as ComponentRendering);
       fixture.detectChanges();
 
-      await fixture.whenStable();
-      fixture.detectChanges();
+      await waitForAsyncRender(fixture);
 
       expect(de.children.length).toBe(1);
 
@@ -855,12 +881,11 @@ describe('SXA components', () => {
     waitForAsync(async () => {
       const component = sxaRenderingDoubleDigitDynamicPlaceholderData.sitecore.route;
       const phKey = 'dynamic-1-{*}';
-      comp.name = phKey;
-      comp.rendering = (component as unknown) as ComponentRendering;
+      fixture.componentRef.setInput('name', phKey);
+      fixture.componentRef.setInput('rendering', (component as unknown) as ComponentRendering);
       fixture.detectChanges();
 
-      await fixture.whenStable();
-      fixture.detectChanges();
+      await waitForAsyncRender(fixture);
 
       expect(de.children.length).toBe(1);
 
@@ -879,6 +904,8 @@ describe('Placeholder Metadata:', () => {
   } = metadataData;
 
   @Component({
+    standalone: true,
+    imports: [PlaceholderComponent],
     selector: 'test-nest',
     template: `
       <div class="nested-test-wrapper">
@@ -893,6 +920,7 @@ describe('Placeholder Metadata:', () => {
   }
 
   @Component({
+    standalone: true,
     selector: 'logo',
     template: `
       <div class="Logo-deep"></div>
@@ -905,18 +933,20 @@ describe('Placeholder Metadata:', () => {
 
   let fixture: ComponentFixture<TestPlaceholderComponent>;
   let de: DebugElement;
-  let comp: TestPlaceholderComponent;
 
   beforeEach(
     waitForAsync(() => {
       TestBed.configureTestingModule({
-        declarations: [TestNestingComponent, TestPlaceholderComponent, LogoComponent],
+        declarations: [],
         imports: [
+          TestNestingComponent,
+          LogoComponent,
           RouterTestingModule,
           JssModule.withComponents([
             { name: 'Home', type: TestNestingComponent },
             { name: 'Logo', type: LogoComponent },
           ]),
+          TestPlaceholderComponent,
         ],
         providers: [],
       }).compileComponents();
@@ -926,7 +956,7 @@ describe('Placeholder Metadata:', () => {
 
       const jssContext = de.injector.get(JssStateService);
       jssContext.setState(layoutData);
-      comp = fixture.componentInstance;
+
       fixture.detectChanges();
     })
   );
@@ -936,14 +966,13 @@ describe('Placeholder Metadata:', () => {
     waitForAsync(async () => {
       const component = layoutData.sitecore.route;
       const phKey = 'main';
-      comp.name = phKey;
-      comp.rendering = (component as unknown) as ComponentRendering;
+      fixture.componentRef.setInput('name', phKey);
+      fixture.componentRef.setInput('rendering', (component as unknown) as ComponentRendering);
 
       fixture.detectChanges();
-      await fixture.whenStable();
-      fixture.detectChanges();
-      await fixture.whenStable();
-      fixture.detectChanges();
+      await waitForAsyncRender(fixture);
+
+      await waitForAsyncRender(fixture);
 
       expect(de.children.length).toBe(1);
 
@@ -982,14 +1011,16 @@ describe('Placeholder Metadata:', () => {
     waitForAsync(async () => {
       const component = layoutData.sitecore.route;
       const phKey = 'main';
-      comp.name = phKey;
-      comp.rendering = { uid: '1234', ...((component as unknown) as ComponentRendering) };
+      fixture.componentRef.setInput('name', phKey);
+      fixture.componentRef.setInput('rendering', {
+        uid: '1234',
+        ...((component as unknown) as ComponentRendering),
+      });
 
       fixture.detectChanges();
-      await fixture.whenStable();
-      fixture.detectChanges();
-      await fixture.whenStable();
-      fixture.detectChanges();
+      await waitForAsyncRender(fixture);
+
+      await waitForAsyncRender(fixture);
 
       expect(de.children.length).toBe(1);
 
@@ -1027,12 +1058,12 @@ describe('Placeholder Metadata:', () => {
     waitForAsync(async () => {
       const component = layoutDataWithEmptyPlaceholder.sitecore.route;
       const phKey = 'main';
-      comp.name = phKey;
-      comp.rendering = (component as unknown) as ComponentRendering;
+      fixture.componentRef.setInput('name', phKey);
+      fixture.componentRef.setInput('rendering', (component as unknown) as ComponentRendering);
 
       fixture.detectChanges();
-      await fixture.whenStable();
-      fixture.detectChanges();
+      await waitForAsyncRender(fixture);
+
       const elements = de.queryAll(By.css('code'));
 
       expect(de.query(By.css('div.sc-jss-empty-placeholder'))).toBeDefined();
@@ -1057,12 +1088,11 @@ describe('Placeholder Metadata:', () => {
     waitForAsync(async () => {
       const component = layoutDataWithUnknownComponent.sitecore.route;
       const phKey = 'main';
-      comp.name = phKey;
-      comp.rendering = (component as unknown) as ComponentRendering;
+      fixture.componentRef.setInput('name', phKey);
+      fixture.componentRef.setInput('rendering', (component as unknown) as ComponentRendering);
 
       fixture.detectChanges();
-      await fixture.whenStable();
-      fixture.detectChanges();
+      await waitForAsyncRender(fixture);
 
       expect(de.children.length).toBe(1);
       const elements = de.queryAll(By.css('code'));
@@ -1092,6 +1122,8 @@ describe('Placeholder Metadata: dynamic placeholder:', () => {
   const { layoutData, layoutDataForNestedDynamicPlaceholder } = metadataData;
 
   @Component({
+    standalone: true,
+    imports: [PlaceholderComponent],
     selector: 'test-nest',
     template: `
       <div class="nested-test-wrapper">
@@ -1106,6 +1138,7 @@ describe('Placeholder Metadata: dynamic placeholder:', () => {
   }
 
   @Component({
+    standalone: true,
     selector: 'logo',
     template: `
       <div class="Logo-deep"></div>
@@ -1118,18 +1151,20 @@ describe('Placeholder Metadata: dynamic placeholder:', () => {
 
   let fixture: ComponentFixture<TestPlaceholderComponent>;
   let de: DebugElement;
-  let comp: TestPlaceholderComponent;
 
   beforeEach(
     waitForAsync(() => {
       TestBed.configureTestingModule({
-        declarations: [TestNestingComponent, TestPlaceholderComponent, LogoComponent],
+        declarations: [],
         imports: [
+          TestNestingComponent,
+          LogoComponent,
           RouterTestingModule,
           JssModule.withComponents([
             { name: 'Home', type: TestNestingComponent },
             { name: 'Logo', type: LogoComponent },
           ]),
+          TestPlaceholderComponent,
         ],
         providers: [],
       }).compileComponents();
@@ -1138,7 +1173,7 @@ describe('Placeholder Metadata: dynamic placeholder:', () => {
       de = fixture.debugElement;
       const jssContext = de.injector.get(JssStateService);
       jssContext.setState(layoutData);
-      comp = fixture.componentInstance;
+
       fixture.detectChanges();
     })
   );
@@ -1150,14 +1185,14 @@ describe('Placeholder Metadata: dynamic placeholder:', () => {
       const component = layoutData.sitecore.route;
       const phKey = 'container-1';
 
-      comp.name = phKey;
-      comp.rendering = (component as unknown) as ComponentRendering;
+      fixture.componentRef.setInput('name', phKey);
+      fixture.componentRef.setInput('rendering', (component as unknown) as ComponentRendering);
       fixture.detectChanges();
       // double await is needed for nested/deep placeholders to render all components. Just Angular things?
-      await fixture.whenStable();
-      fixture.detectChanges();
-      await fixture.whenStable();
-      fixture.detectChanges();
+      await waitForAsyncRender(fixture);
+
+      await waitForAsyncRender(fixture);
+
       expect(de.children.length).toBe(1);
 
       const renderedHTML = de.nativeElement.innerHTML;
@@ -1197,14 +1232,17 @@ describe('Placeholder Metadata: dynamic placeholder:', () => {
       const component = layoutData.sitecore.route;
       const phKey = 'container-1';
 
-      comp.name = phKey;
-      comp.rendering = { uid: '1234', ...((component as unknown) as ComponentRendering) };
+      fixture.componentRef.setInput('name', phKey);
+      fixture.componentRef.setInput('rendering', {
+        uid: '1234',
+        ...((component as unknown) as ComponentRendering),
+      });
       fixture.detectChanges();
       // double await is needed for nested/deep placeholders to render all components. Just Angular things?
-      await fixture.whenStable();
-      fixture.detectChanges();
-      await fixture.whenStable();
-      fixture.detectChanges();
+      await waitForAsyncRender(fixture);
+
+      await waitForAsyncRender(fixture);
+
       expect(de.children.length).toBe(1);
       const elements = de.queryAll(By.css('code'));
 
@@ -1245,15 +1283,15 @@ describe('Placeholder Metadata: dynamic placeholder:', () => {
       const layoutData = layoutDataForNestedDynamicPlaceholder('container-1-{*}');
       const component = layoutData.sitecore.route;
       const phKey = 'container-1-2';
-      comp.name = phKey;
-      comp.rendering = (component as unknown) as ComponentRendering;
+      fixture.componentRef.setInput('name', phKey);
+      fixture.componentRef.setInput('rendering', (component as unknown) as ComponentRendering);
 
       fixture.detectChanges();
       // double await is needed for nested/deep placeholders to render all components
-      await fixture.whenStable();
-      fixture.detectChanges();
-      await fixture.whenStable();
-      fixture.detectChanges();
+      await waitForAsyncRender(fixture);
+
+      await waitForAsyncRender(fixture);
+
       expect(de.children.length).toBe(1);
       const elements = de.queryAll(By.css('code'));
 
@@ -1293,13 +1331,13 @@ describe('Placeholder Metadata: dynamic placeholder:', () => {
       const layoutData = layoutDataForNestedDynamicPlaceholder('container-{*}');
       const component = layoutData.sitecore.route;
       const phKey = 'container-2';
-      comp.name = phKey;
-      comp.rendering = (component as unknown) as ComponentRendering;
+      fixture.componentRef.setInput('name', phKey);
+      fixture.componentRef.setInput('rendering', (component as unknown) as ComponentRendering);
 
       fixture.detectChanges();
-      await fixture.whenStable();
+      await waitForAsyncRender(fixture);
       const placeholder = de.query(By.css('sc-placeholder')).componentInstance;
-      expect(Object.keys(placeholder?.rendering?.placeholders || [])).toEqual(['container-{*}']);
+      expect(Object.keys(placeholder?.rendering()?.placeholders || [])).toEqual(['container-{*}']);
     })
   );
 });

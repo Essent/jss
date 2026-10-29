@@ -143,9 +143,11 @@ function lazyComponent(
 async function renderFixture<T>(fixture: ComponentFixture<T>) {
   fixture.detectChanges();
   await fixture.whenStable();
-  fixture.detectChanges();
+  await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  fixture.detectChanges(false);
   await fixture.whenStable();
-  fixture.detectChanges();
+  await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  fixture.detectChanges(false);
 }
 
 /**
@@ -158,6 +160,8 @@ function expectAppLifetimeSourcesUsable() {
 }
 
 describe('lazy component injector lifetime', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
   it('creates a new injector for each render, like the NgModule path', async () => {
     const lazyComponents = [
       lazyComponent('Lazy', async () =>
@@ -278,6 +282,8 @@ describe('lazy component injector lifetime', () => {
 });
 
 describe('lazy component injector errors', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
   [
     {
       scenario: 'DYNAMIC_COMPONENT is missing',

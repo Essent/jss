@@ -68,7 +68,7 @@ export class FormComponent implements OnInit, OnDestroy {
 
   isEditing = false;
 
-  private contextSubscription: Subscription;
+  private contextSubscription?: Subscription;
 
   private readonly edgeConfig = inject(EDGE_CONFIG);
   private readonly platformId = inject(PLATFORM_ID);
@@ -105,7 +105,8 @@ export class FormComponent implements OnInit, OnDestroy {
       );
 
       this.elRef.nativeElement.innerHTML = content;
-      this.elRef.nativeElement.className = this.rendering().params?.styles?.trimEnd() || '';
+      this.elRef.nativeElement.className =
+        this.rendering().params?.styles?.replace(/\s+$/, '') || '';
       this.elRef.nativeElement.id = this.rendering().params?.RenderingIdentifier || '';
 
       const form = this.elRef.nativeElement.querySelector('form');

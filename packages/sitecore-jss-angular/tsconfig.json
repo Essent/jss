@@ -3,6 +3,7 @@
   "compilerOptions": {
     "target": "es2022",
     "module": "es2022",
+    "lib": ["ES2022", "dom"],
     "strictPropertyInitialization": false,
     "typeRoots": ["./node_modules/@types", "./typings"],
     "skipLibCheck": true

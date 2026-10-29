@@ -7,9 +7,8 @@
     "skipLibCheck": true,
     "experimentalDecorators": true,
     "noEmit": true,
-    "baseUrl": ".",
     "paths": {
-      "@sitecore-jss/sitecore-jss-angular": ["../dist/index.d.ts"],
+      "@sitecore-jss/sitecore-jss-angular": ["../dist"],
       "@angular/*": ["../node_modules/@angular/*"]
     }
   },

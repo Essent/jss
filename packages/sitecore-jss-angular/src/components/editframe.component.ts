@@ -51,9 +51,11 @@ export class EditFrameComponent implements OnChanges {
   ngOnChanges() {
     const sitecore = this.sitecore();
     if (!sitecore?.context.pageEditing) {
+      this.isEditing = false;
       return;
     }
 
+    this.isEditing = true;
     this.frameProps.class = 'scLooseFrameZone';
     const cssClass = this.cssClass();
     if (cssClass) {

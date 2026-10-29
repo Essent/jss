@@ -6,13 +6,15 @@ import { TextField } from './rendering-field';
 import { TestBaseDirective } from '../test-data/test-base.directive';
 
 @Component({
+  imports: [TestBaseDirective],
+  standalone: true,
   selector: 'test-base',
   template: `
     <span *scTestBase="field(); editable: editable()"></span>
   `,
 })
 class TestComponent {
-  readonly field = input<TextField>(undefined);
+  readonly field = input<TextField | undefined>(undefined);
   readonly editable = input(true);
 }
 
@@ -21,12 +23,14 @@ const emptyTextFieldEditingTemplate =
   '<span>[This is a *custom* empty field component for text]</span>';
 
 @Component({
+  imports: [TestBaseDirective],
+  standalone: true,
   selector: 'test-base-template',
   template: `
     <span
       *scTestBase="
-        field;
-        editable: editable;
+        field();
+        editable: editable();
         emptyFieldEditingTemplate: ${emptyTextFieldEditingTemplateId}
       "
     ></span>
@@ -45,18 +49,17 @@ class TestEmptyTemplateComponent {
 describe('<span *scTestBase />', () => {
   let fixture: ComponentFixture<TestComponent>;
   let de: DebugElement;
-  let comp: TestComponent;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [TestBaseDirective, TestComponent, TestEmptyTemplateComponent],
+      declarations: [],
+      imports: [TestBaseDirective, TestComponent, TestEmptyTemplateComponent],
     });
 
     fixture = TestBed.createComponent(TestComponent);
     fixture.detectChanges();
 
     de = fixture.debugElement;
-    comp = fixture.componentInstance;
   });
 
   describe('edit mode chromes', () => {
@@ -64,7 +67,7 @@ describe('<span *scTestBase />', () => {
       const field: { [prop: string]: unknown } = {
         value: 'value',
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.query(By.css('span')).nativeElement.innerHTML;
@@ -76,7 +79,7 @@ describe('<span *scTestBase />', () => {
         value: 'value',
         editable: 'editable',
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.query(By.css('span')).nativeElement.innerHTML;
@@ -87,7 +90,7 @@ describe('<span *scTestBase />', () => {
       const field: { [prop: string]: unknown } = {
         value: '',
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const spanElement = de.query(By.css('span'));
@@ -113,7 +116,7 @@ describe('<span *scTestBase />', () => {
         value: 'value',
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.query(By.css('span')).nativeElement.innerHTML;
@@ -126,7 +129,7 @@ describe('<span *scTestBase />', () => {
           value: '',
           metadata: testMetadata,
         };
-        comp.field = field;
+        fixture.componentRef.setInput('field', field);
         fixture.detectChanges();
 
         const rendered = de.nativeElement.innerHTML;
@@ -140,13 +143,12 @@ describe('<span *scTestBase />', () => {
         fixture.detectChanges();
 
         de = fixture.debugElement;
-        comp = fixture.componentInstance;
 
         const field = {
           value: '',
           metadata: testMetadata,
         };
-        comp.field = field;
+        fixture.componentRef.setInput('field', field);
         fixture.detectChanges();
 
         const rendered = de.nativeElement.innerHTML;
@@ -158,8 +160,8 @@ describe('<span *scTestBase />', () => {
           value: '',
           metadata: testMetadata,
         };
-        comp.field = field;
-        comp.editable = false;
+        fixture.componentRef.setInput('field', field);
+        fixture.componentRef.setInput('editable', false);
         fixture.detectChanges();
 
         const spanElement = de.query(By.css('span'));
@@ -174,8 +176,8 @@ describe('<span *scTestBase />', () => {
             metadata: testMetadata,
             value: 'value',
           };
-          comp.editable = true;
-          comp.field = field;
+          fixture.componentRef.setInput('editable', true);
+          fixture.componentRef.setInput('field', field);
           fixture.detectChanges();
 
           const fieldValue = de.query(By.css('span'));
@@ -197,8 +199,8 @@ describe('<span *scTestBase />', () => {
             metadata: testMetadata,
             value: '',
           };
-          comp.editable = true;
-          comp.field = field;
+          fixture.componentRef.setInput('editable', true);
+          fixture.componentRef.setInput('field', field);
           fixture.detectChanges();
 
           const fieldValue = de.query(
@@ -224,8 +226,8 @@ describe('<span *scTestBase />', () => {
             metadata: testMetadata,
             value: 'value',
           };
-          comp.editable = false;
-          comp.field = field;
+          fixture.componentRef.setInput('editable', false);
+          fixture.componentRef.setInput('field', field);
           fixture.detectChanges();
 
           const fieldEl = de.query(By.css('span'));
@@ -243,8 +245,8 @@ describe('<span *scTestBase />', () => {
         const field = {
           value: 'value',
         };
-        comp.editable = true;
-        comp.field = field;
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('field', field);
         fixture.detectChanges();
 
         const fieldEl = de.query(By.css('span'));

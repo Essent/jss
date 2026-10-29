@@ -17,7 +17,7 @@ import { DefaultEmptyImageFieldEditingComponent } from './default-empty-image-fi
 import { ImageField, ImageFieldValue } from './rendering-field';
 
 @Directive({ selector: '[scImage]' })
-export class ImageDirective extends BaseFieldDirective implements OnChanges {
+export class ImageDirective extends BaseFieldDirective<ImageField> implements OnChanges {
   readonly field: InputSignal<ImageField | undefined> = input<ImageField | undefined>(undefined, {
     alias: 'scImage',
   });

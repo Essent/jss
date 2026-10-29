@@ -13,8 +13,8 @@ import { ComponentRendering } from '../public_api';
 
 /** Registers a statically loaded component */
 export class ComponentNameAndType {
-  name: string;
-  type: Type<unknown>;
+  name!: string;
+  type!: Type<unknown>;
 
   canActivate?:
     | JssCanActivate
