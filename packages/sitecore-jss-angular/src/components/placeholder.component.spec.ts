@@ -2,6 +2,7 @@ import { Location, NgTemplateOutlet } from '@angular/common';
 import {
   Component,
   DebugElement,
+  ErrorHandler,
   inject,
   Injectable,
   input,
@@ -597,6 +598,8 @@ describe('<sc-placeholder /> with lazy loaded modules', () => {
   let fixture: ComponentFixture<TestLazyPlaceholderComponent>;
   let de: DebugElement;
   let comp: TestLazyPlaceholderComponent;
+  let errorHandler: jasmine.SpyObj<ErrorHandler>;
+  const lazyLoadError = new Error('lazy component load failed');
 
   const loadChildrenFunc = () =>
     import('../test-data/lazy-loading/lazy-loading.module').then(
@@ -614,6 +617,7 @@ describe('<sc-placeholder /> with lazy loaded modules', () => {
 
   beforeEach(
     waitForAsync(() => {
+      errorHandler = jasmine.createSpyObj<ErrorHandler>('ErrorHandler', ['handleError']);
       TestBed.configureTestingModule({
         declarations: [],
         imports: [
@@ -655,12 +659,21 @@ describe('<sc-placeholder /> with lazy loaded modules', () => {
                 loadChildren: loadChildrenFunc,
                 canActivate: [MockUnexpectedErrorGuard],
               },
+              {
+                path: 'RejectedLazyComponent',
+                loadChildren: () => Promise.reject(lazyLoadError),
+              },
             ]
           ),
           TestLazyPlaceholderComponent,
           NotFoundComponent,
         ],
-        providers: [MockUrlTreeGuard, MockRedirectCommandGuard, MockUnexpectedErrorGuard],
+        providers: [
+          MockUrlTreeGuard,
+          MockRedirectCommandGuard,
+          MockUnexpectedErrorGuard,
+          { provide: ErrorHandler, useValue: errorHandler },
+        ],
       }).compileComponents();
     })
   );
@@ -738,6 +751,28 @@ describe('<sc-placeholder /> with lazy loaded modules', () => {
       );
     });
   });
+
+  it(
+    'should emit failure and clear loading state when lazy component loading rejects',
+    waitForAsync(async () => {
+      fixture.componentRef.setInput('rendering', {
+        componentName: 'Test',
+        placeholders: {
+          main: [{ componentName: 'RejectedLazyComponent' }],
+        },
+      } as ComponentRendering);
+
+      fixture.detectChanges();
+      await waitForAsyncRender(fixture);
+
+      const placeholder = de.query(By.directive(PlaceholderComponent)).componentInstance;
+      expect(comp.failed).toBe(lazyLoadError);
+      expect(placeholder.isLoading).toBeFalse();
+      expect(de.nativeElement.querySelector('img')).toBeNull();
+      expect(comp.loaded).toBeUndefined();
+      expect(errorHandler.handleError).not.toHaveBeenCalled();
+    })
+  );
 });
 
 @Component({
