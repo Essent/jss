@@ -360,8 +360,8 @@ export class PlaceholderComponent implements OnInit, OnChanges, DoCheck, OnDestr
       this.isLoading = false;
       this.changeDetectorRef.markForCheck();
     } else {
-      const factories = await this.componentFactory.getComponents(placeholder);
       try {
+        const factories = await this.componentFactory.getComponents(placeholder);
         const nonGuarded = await this.guardResolver(factories);
         const withData = await this.dataResolver(nonGuarded);
         // not using index to ensure code blocks are rendered at correct positions
