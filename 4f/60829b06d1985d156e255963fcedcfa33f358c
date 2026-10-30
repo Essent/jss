@@ -1,0 +1,21 @@
+packages/sitecore-jss-angular/src/components/placeholder.component.spec.ts
+  s_fa92979d80408b::t_7d0324beff757f 5,601-602,620,662-665,671-676,754-775
+packages/sitecore-jss-angular/src/components/placeholder.component.ts
+  s_fa92979d80408b::t_11fd1058d23a68 364
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4f60829b06d1985d156e255963fcedcfa33f358c",
+  "prompts": {},
+  "sessions": {
+    "s_fa92979d80408b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_e7306d00dffemhw6P0bihY5NUN",
+        "model": "unknown"
+      },
+      "human_author": "Mark van Lagen <mark@markvlagen.nl>"
+    }
+  }
+}
