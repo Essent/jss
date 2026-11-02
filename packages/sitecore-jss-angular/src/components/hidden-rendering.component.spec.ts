@@ -2,8 +2,11 @@ import { Component, DebugElement } from '@angular/core';
 import { waitForAsync, ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { JssModule } from '../lib.module';
+import { JSS_DIRECTIVES } from '../lib.module';
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-hidden-rendering',
   template: `
     <sc-hidden-rendering></sc-hidden-rendering>
@@ -19,9 +22,10 @@ describe('<sc-hidden-rendering />', () => {
   beforeEach(
     waitForAsync(() => {
       TestBed.configureTestingModule({
-        declarations: [TestHiddenRenderingComponent],
+        declarations: [],
         imports: [
           JssModule.withComponents([{ name: 'TestComponent', type: TestHiddenRenderingComponent }]),
+          TestHiddenRenderingComponent,
         ],
       }).compileComponents();
     })

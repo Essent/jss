@@ -1,4 +1,4 @@
-import { Component, DebugElement, Input, OnInit } from '@angular/core';
+import { Component, DebugElement, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
@@ -10,6 +10,7 @@ import {
 } from '@sitecore-jss/sitecore-jss/editing';
 import { LayoutServiceContextData, RouteData } from '@sitecore-jss/sitecore-jss/layout';
 import { RouterTestingModule } from '@angular/router/testing';
+import { JSS_DIRECTIVES } from '../lib.module';
 
 const editingContext = {
   context: {
@@ -38,64 +39,63 @@ const normalContext = {
 };
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-editframe',
   template: `
     <div>
       <sc-edit-frame
-        [title]="title"
-        [tooltip]="tooltip"
-        [cssClass]="cssClass"
-        [dataSource]="dataSource"
-        [buttons]="buttons"
-        [sitecore]="sitecore"
+        [title]="title()"
+        [tooltip]="tooltip()"
+        [cssClass]="cssClass()"
+        [dataSource]="dataSource()"
+        [buttons]="buttons()"
+        [sitecore]="sitecore()"
       >
         Wrapped text
       </sc-edit-frame>
     </div>
   `,
 })
-class TestComponent implements OnInit {
-  @Input() dataSource: EditFrameDataSource;
+class TestComponent {
+  readonly dataSource = input<EditFrameDataSource | undefined>(undefined);
 
-  @Input() buttons: EditButtonTypes[];
+  readonly buttons = input<EditButtonTypes[] | undefined>(undefined);
 
-  @Input() title: string;
+  readonly title = input<string | undefined>(undefined);
 
-  @Input() tooltip: string;
+  readonly tooltip = input<string | undefined>(undefined);
 
-  @Input() cssClass: string;
+  readonly cssClass = input<string | undefined>(undefined);
 
-  @Input() parameters: Record<string, string | number | boolean | undefined | null>;
+  readonly parameters = input<Record<string, string | number | boolean | undefined | null>>();
 
-  @Input() sitecore: LayoutServiceContextData & {
-    route: RouteData<unknown> | null;
-  };
-
-  ngOnInit() {
-    this.sitecore = normalContext;
-  }
+  readonly sitecore = input<
+    LayoutServiceContextData & {
+      route: RouteData<unknown> | null;
+    }
+  >();
 }
 
 describe('<EditFrame />', () => {
   let fixture: ComponentFixture<TestComponent>;
   let de: DebugElement;
-  let editFrameComp: TestComponent;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [EditFrameComponent, TestComponent],
-      imports: [RouterTestingModule],
+      declarations: [],
+      imports: [RouterTestingModule, EditFrameComponent, TestComponent],
     });
 
     fixture = TestBed.createComponent(TestComponent);
+    fixture.componentRef.setInput('sitecore', normalContext);
     fixture.detectChanges();
 
     de = fixture.debugElement.query(By.css('sc-edit-frame'));
-    editFrameComp = fixture.componentInstance;
   });
 
   it('should render wrapped element when not in pageEditing mode', () => {
-    editFrameComp.sitecore = normalContext;
+    fixture.componentRef.setInput('sitecore', normalContext);
     fixture.detectChanges();
 
     const rendered = de.nativeElement.textContent.trim();
@@ -103,7 +103,7 @@ describe('<EditFrame />', () => {
   });
 
   it('should render a frame when in pageEditing mode', () => {
-    editFrameComp.sitecore = editingContext;
+    fixture.componentRef.setInput('sitecore', editingContext);
     fixture.detectChanges();
 
     const frameDiv = de.query(By.css('div.scLooseFrameZone')).nativeElement;
@@ -114,7 +114,7 @@ describe('<EditFrame />', () => {
   });
 
   it('should render child content within a frame when in pageEditing mode', () => {
-    editFrameComp.sitecore = editingContext;
+    fixture.componentRef.setInput('sitecore', editingContext);
     fixture.detectChanges();
 
     const frameDiv = de.query(By.css('div.scLooseFrameZone')).nativeElement;
@@ -122,9 +122,9 @@ describe('<EditFrame />', () => {
   });
 
   it('should render the title and tooltip', () => {
-    editFrameComp.sitecore = editingContext;
-    editFrameComp.title = 'Test Title';
-    editFrameComp.tooltip = 'Test Tooltip';
+    fixture.componentRef.setInput('sitecore', editingContext);
+    fixture.componentRef.setInput('title', 'Test Title');
+    fixture.componentRef.setInput('tooltip', 'Test Tooltip');
     fixture.detectChanges();
 
     const frameSpan = de.query(By.css('div.scLooseFrameZone > span.scChromeData')).nativeElement;
@@ -134,8 +134,8 @@ describe('<EditFrame />', () => {
   });
 
   it('should render the added class in editing mode', () => {
-    editFrameComp.sitecore = editingContext;
-    editFrameComp.cssClass = 'topClass';
+    fixture.componentRef.setInput('sitecore', editingContext);
+    fixture.componentRef.setInput('cssClass', 'topClass');
     fixture.detectChanges();
 
     const frameDiv = de.query(By.css('div.scLooseFrameZone')).nativeElement;
@@ -150,8 +150,8 @@ describe('<EditFrame />', () => {
       language: 'en',
     };
 
-    editFrameComp.sitecore = editingContext;
-    editFrameComp.dataSource = mockDatasource;
+    fixture.componentRef.setInput('sitecore', editingContext);
+    fixture.componentRef.setInput('dataSource', mockDatasource);
     fixture.detectChanges();
 
     const frameDiv = de.query(By.css('div.scLooseFrameZone')).nativeElement;
@@ -174,9 +174,9 @@ describe('<EditFrame />', () => {
       DefaultEditFrameButton.edit,
     ];
 
-    editFrameComp.sitecore = editingContext;
-    editFrameComp.dataSource = mockDatasource;
-    editFrameComp.buttons = mockButtons;
+    fixture.componentRef.setInput('sitecore', editingContext);
+    fixture.componentRef.setInput('dataSource', mockDatasource);
+    fixture.componentRef.setInput('buttons', mockButtons);
     fixture.detectChanges();
 
     const frameSpan = de.query(By.css('div.scLooseFrameZone > span.scChromeData')).nativeElement;

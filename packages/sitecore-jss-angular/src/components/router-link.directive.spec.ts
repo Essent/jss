@@ -1,4 +1,4 @@
-import { Component, DebugElement, Input, TemplateRef } from '@angular/core';
+import { Component, DebugElement, TemplateRef, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
@@ -6,21 +6,24 @@ import { generalLinkField as eeLinkData } from '../test-data/ee-data';
 import { RouterLinkDirective } from './router-link.directive';
 import { RouterTestingModule } from '@angular/router/testing';
 import { LinkField } from './rendering-field';
+import { JSS_DIRECTIVES } from '../lib.module';
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-router-link',
   template: `
     <a
-      *scRouterLink="field; editable: editable; attrs: attrs"
+      *scRouterLink="field(); editable: editable(); attrs: attrs()"
       class="external-css-class"
       id="my-link"
     ></a>
   `,
 })
 class TestComponent {
-  @Input() field: LinkField;
-  @Input() editable = true;
-  @Input() attrs = {};
+  readonly field = input<LinkField | undefined>(undefined);
+  readonly editable = input(true);
+  readonly attrs = input({});
 }
 
 const emptyLinkFieldEditingTemplateId = 'emptyLinkFieldEditingTemplate';
@@ -29,13 +32,15 @@ const emptyLinkFieldEditingTemplateDefaultTestString =
   '<span sc-default-empty-text-field-editing-placeholder="">[No text in field]</span>';
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-empty-template-router-link',
   template: `
     <a
       *scRouterLink="
-        field;
-        editable: editable;
-        attrs: attrs;
+        field();
+        editable: editable();
+        attrs: attrs();
         emptyFieldEditingTemplate: ${emptyLinkFieldEditingTemplateId}
       "
       class="external-css-class"
@@ -47,27 +52,30 @@ const emptyLinkFieldEditingTemplateDefaultTestString =
   `,
 })
 class TestEmptyTemplateComponent {
-  @Input() field: LinkField;
-  @Input() editable = true;
-  @Input() attrs = {};
-  @Input() emptyFieldEditingTemplate: TemplateRef<unknown>;
+  readonly field = input<LinkField>();
+  readonly editable = input(true);
+  readonly attrs = input({});
+  readonly emptyFieldEditingTemplate = input<TemplateRef<unknown>>();
 }
 
 describe('<a *scRouterLink />', () => {
   let fixture: ComponentFixture<TestComponent>;
   let de: DebugElement;
-  let comp: TestComponent;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [RouterLinkDirective, TestComponent, TestEmptyTemplateComponent],
-      imports: [RouterTestingModule],
+      declarations: [],
+      imports: [
+        RouterTestingModule,
+        RouterLinkDirective,
+        TestComponent,
+        TestEmptyTemplateComponent,
+      ],
     });
 
     fixture = TestBed.createComponent(TestComponent);
     de = fixture.debugElement;
 
-    comp = fixture.componentInstance;
     fixture.detectChanges();
   });
 
@@ -77,7 +85,7 @@ describe('<a *scRouterLink />', () => {
 
   it('should render nothing with missing editable and value', () => {
     const field = {};
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     expect(de.children.length).toBe(0);
@@ -88,7 +96,7 @@ describe('<a *scRouterLink />', () => {
       editableFirstPart: '<a class="yo" href="/services">Lorem',
       editableLastPart: '</a>',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     expect(de.nativeElement.querySelector('span').innerHTML).toContain(field.editableFirstPart);
@@ -102,8 +110,8 @@ describe('<a *scRouterLink />', () => {
       },
       editable: '<a href="/services" class="yo">Lorem</a>',
     };
-    comp.field = field;
-    comp.editable = false;
+    fixture.componentRef.setInput('field', field);
+    fixture.componentRef.setInput('editable', false);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('a'));
@@ -116,7 +124,7 @@ describe('<a *scRouterLink />', () => {
       href: '/lorem',
       text: 'ipsum',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('a'));
@@ -129,7 +137,7 @@ describe('<a *scRouterLink />', () => {
       editableFirstPart: eeLinkData,
       editableLastPart: '</a>',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.nativeElement.querySelector('span');
@@ -149,7 +157,7 @@ describe('<a *scRouterLink />', () => {
         target: '_blank',
       },
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('a'));
@@ -164,7 +172,7 @@ describe('<a *scRouterLink />', () => {
       editableFirstPart: '<a href="/services" class="yo">Lorem',
       editableLastPart: '</a>',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.nativeElement.querySelector('span');
@@ -176,8 +184,8 @@ describe('<a *scRouterLink />', () => {
       editableFirstPart: '<a href="/services" class="yo">Lorem',
       editableLastPart: '</a>',
     };
-    comp.field = field;
-    comp.attrs = { title: 'footip' };
+    fixture.componentRef.setInput('field', field);
+    fixture.componentRef.setInput('attrs', { title: 'footip' });
     fixture.detectChanges();
 
     const rendered = de.nativeElement.querySelector('span');
@@ -194,8 +202,8 @@ describe('<a *scRouterLink />', () => {
         target: '_blank',
       },
     };
-    comp.field = field;
-    comp.attrs = { title: 'footip' };
+    fixture.componentRef.setInput('field', field);
+    fixture.componentRef.setInput('attrs', { title: 'footip' });
     fixture.detectChanges();
 
     const rendered = de.query(By.css('a'));
@@ -222,7 +230,7 @@ describe('<a *scRouterLink />', () => {
         value: { src: undefined },
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -234,7 +242,7 @@ describe('<a *scRouterLink />', () => {
         hred: undefined,
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -246,13 +254,12 @@ describe('<a *scRouterLink />', () => {
       fixture.detectChanges();
 
       de = fixture.debugElement;
-      comp = fixture.componentInstance;
 
       const field = {
         value: { href: undefined },
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -264,13 +271,12 @@ describe('<a *scRouterLink />', () => {
       fixture.detectChanges();
 
       de = fixture.debugElement;
-      comp = fixture.componentInstance;
 
       const field = {
         href: undefined,
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -282,8 +288,8 @@ describe('<a *scRouterLink />', () => {
         value: { href: undefined },
         metadata: testMetadata,
       };
-      comp.field = field;
-      comp.editable = false;
+      fixture.componentRef.setInput('field', field);
+      fixture.componentRef.setInput('editable', false);
       fixture.detectChanges();
       expect(de.children.length).toBe(0);
     });
@@ -293,8 +299,8 @@ describe('<a *scRouterLink />', () => {
         href: undefined,
         metadata: testMetadata,
       };
-      comp.field = field;
-      comp.editable = false;
+      fixture.componentRef.setInput('field', field);
+      fixture.componentRef.setInput('editable', false);
       fixture.detectChanges();
       expect(de.children.length).toBe(0);
     });
@@ -302,27 +308,33 @@ describe('<a *scRouterLink />', () => {
 });
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-router-link-children',
   template: `
-    <a *scRouterLink="field; editable: editable; attrs: attrs" id="my-link"
-      ><span *ngIf="true">hello world</span></a
+    <a *scRouterLink="field(); editable: editable(); attrs: attrs()" id="my-link"
+      >@if (true) {
+      <span>hello world</span>
+      }</a
     >
   `,
 })
 class TestWithChildrenComponent {
-  @Input() field: LinkField;
-  @Input() editable = true;
-  @Input() attrs = {};
+  readonly field = input<LinkField>();
+  readonly editable = input(true);
+  readonly attrs = input({});
 }
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-empty-template-link',
   template: `
     <a
       *scRouterLink="
-        field;
-        editable: editable;
-        attrs: attrs;
+        field();
+        editable: editable();
+        attrs: attrs();
         emptyFieldEditingTemplate: ${emptyLinkFieldEditingTemplateId}
       "
       id="my-link"
@@ -334,31 +346,30 @@ class TestWithChildrenComponent {
   `,
 })
 class TestEmptyTemplateWithChildrenComponent {
-  @Input() field: LinkField;
-  @Input() editable = true;
-  @Input() attrs = {};
-  @Input() emptyFieldEditingTemplate: TemplateRef<unknown>;
+  readonly field = input<LinkField>();
+  readonly editable = input(true);
+  readonly attrs = input({});
+  readonly emptyFieldEditingTemplate = input<TemplateRef<unknown>>();
 }
 
 describe('<a *scRouterLink>children</a>', () => {
   let fixture: ComponentFixture<TestComponent>;
   let de: DebugElement;
-  let comp: TestComponent;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [
+      declarations: [],
+      imports: [
+        RouterTestingModule,
         RouterLinkDirective,
         TestWithChildrenComponent,
         TestEmptyTemplateWithChildrenComponent,
       ],
-      imports: [RouterTestingModule],
     });
 
     fixture = TestBed.createComponent(TestWithChildrenComponent);
     de = fixture.debugElement;
 
-    comp = fixture.componentInstance;
     fixture.detectChanges();
   });
 
@@ -367,7 +378,7 @@ describe('<a *scRouterLink>children</a>', () => {
       editableFirstPart: '<a class="yo" href="/services">Lorem',
       editableLastPart: '</a>',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     expect(de.nativeElement.innerHTML).toContain('hello world');
@@ -378,7 +389,7 @@ describe('<a *scRouterLink>children</a>', () => {
       href: '/lorem',
       text: 'ipsum',
     };
-    comp.field = field;
+    fixture.componentRef.setInput('field', field);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('a'));
@@ -403,7 +414,7 @@ describe('<a *scRouterLink>children</a>', () => {
         value: { src: undefined },
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -415,7 +426,7 @@ describe('<a *scRouterLink>children</a>', () => {
         hred: undefined,
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -427,13 +438,12 @@ describe('<a *scRouterLink>children</a>', () => {
       fixture.detectChanges();
 
       de = fixture.debugElement;
-      comp = fixture.componentInstance;
 
       const field = {
         value: { href: undefined },
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -445,13 +455,12 @@ describe('<a *scRouterLink>children</a>', () => {
       fixture.detectChanges();
 
       de = fixture.debugElement;
-      comp = fixture.componentInstance;
 
       const field = {
         href: undefined,
         metadata: testMetadata,
       };
-      comp.field = field;
+      fixture.componentRef.setInput('field', field);
       fixture.detectChanges();
 
       const rendered = de.nativeElement.innerHTML;
@@ -463,8 +472,8 @@ describe('<a *scRouterLink>children</a>', () => {
         value: { href: undefined },
         metadata: testMetadata,
       };
-      comp.field = field;
-      comp.editable = false;
+      fixture.componentRef.setInput('field', field);
+      fixture.componentRef.setInput('editable', false);
       fixture.detectChanges();
       expect(de.children.length).toBe(0);
     });
@@ -474,8 +483,8 @@ describe('<a *scRouterLink>children</a>', () => {
         href: undefined,
         metadata: testMetadata,
       };
-      comp.field = field;
-      comp.editable = false;
+      fixture.componentRef.setInput('field', field);
+      fixture.componentRef.setInput('editable', false);
       fixture.detectChanges();
       expect(de.children.length).toBe(0);
     });

@@ -1,5 +1,17 @@
-import { createNgModule, Inject, Injectable, Injector, NgModuleRef, Type } from '@angular/core';
+import {
+  createEnvironmentInjector,
+  createNgModule,
+  EnvironmentInjector,
+  EnvironmentProviders,
+  inject,
+  Injectable,
+  Injector,
+  NgModuleRef,
+  Type,
+} from '@angular/core';
 import { ComponentRendering, HtmlElementRendering } from '@sitecore-jss/sitecore-jss/layout';
+import { RawComponent } from '../components/raw.component';
+import { isRawRendering } from '../components/rendering';
 import {
   ComponentNameAndModule,
   ComponentNameAndType,
@@ -10,14 +22,20 @@ import {
   PLACEHOLDER_COMPONENTS,
   PLACEHOLDER_LAZY_COMPONENTS,
 } from './placeholder.token';
-import { RawComponent } from '../components/raw.component';
-import { isRawRendering } from '../components/rendering';
+import { isComponentMap, isComponentType, isNgModuleType } from './lazy-component-load-result';
 
 export interface ComponentFactoryResult {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   componentImplementation?: Type<any>;
   componentDefinition: ComponentRendering | HtmlElementRendering;
   componentModuleRef?: NgModuleRef<unknown>;
+  /**
+   * Environment injector for a lazy component, component map or EnvironmentProviders result.
+   * The factory creates one per render and does not destroy it, like `componentModuleRef`.
+   * Lazy providers can register app-lifetime sources (for example NgRx effects) that keep
+   * using this injector after the rendered component is destroyed.
+   */
+  componentInjector?: EnvironmentInjector;
   canActivate?:
     | JssCanActivate
     | Type<JssCanActivate>
@@ -30,12 +48,14 @@ export interface ComponentFactoryResult {
 export class JssComponentFactoryService {
   private componentMap: Map<string, ComponentNameAndType>;
   private lazyComponentMap: Map<string, ComponentNameAndModule>;
+  private components: ComponentNameAndType[];
+  private lazyComponents: ComponentNameAndModule[];
+  private injector = inject(Injector);
+  private environmentInjector = inject(EnvironmentInjector);
 
-  constructor(
-    private injector: Injector,
-    @Inject(PLACEHOLDER_COMPONENTS) private components: ComponentNameAndType[],
-    @Inject(PLACEHOLDER_LAZY_COMPONENTS) private lazyComponents: ComponentNameAndModule[]
-  ) {
+  constructor() {
+    this.components = inject(PLACEHOLDER_COMPONENTS);
+    this.lazyComponents = inject(PLACEHOLDER_LAZY_COMPONENTS);
     this.componentMap = new Map();
     this.lazyComponentMap = new Map();
 
@@ -62,32 +82,62 @@ export class JssComponentFactoryService {
 
     if (lazyComponent) {
       return lazyComponent.loadChildren().then((lazyChild) => {
-        let componentType = null;
-        const moduleRef = createNgModule(lazyChild, this.injector);
-        const dynamicComponentType = moduleRef.injector.get(DYNAMIC_COMPONENT);
+        let componentType: Type<unknown> | undefined;
+        let moduleRef: NgModuleRef<unknown> | undefined;
+        let componentInjector: EnvironmentInjector | undefined;
+        let dynamicComponentType: Type<unknown> | Record<string, Type<unknown>> | null;
+
+        if (isNgModuleType(lazyChild)) {
+          moduleRef = createNgModule(lazyChild, this.injector);
+          dynamicComponentType = moduleRef.injector.get(DYNAMIC_COMPONENT);
+        } else {
+          const providers =
+            isComponentType(lazyChild) || isComponentMap(lazyChild)
+              ? [{ provide: DYNAMIC_COMPONENT, useValue: lazyChild }]
+              : [lazyChild as EnvironmentProviders];
+          componentInjector = createEnvironmentInjector(providers, this.environmentInjector);
+          dynamicComponentType = componentInjector.get(DYNAMIC_COMPONENT, null, { self: true });
+        }
+
         if (!dynamicComponentType) {
+          if (componentInjector) {
+            throw new Error(
+              `JssComponentFactoryService: Lazy providers for component "${component.componentName}" do not provide DYNAMIC_COMPONENT.`
+            );
+          }
           throw new Error(
             `JssComponentFactoryService: Lazy load module for component "${lazyComponent.path}" missing DYNAMIC_COMPONENT provider. Missing JssModule.forChild()?`
           );
         }
 
         if (component.componentName in dynamicComponentType) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          componentType = (dynamicComponentType as { [s: string]: any })[component.componentName];
+          componentType = (dynamicComponentType as Record<string, Type<unknown>>)[
+            component.componentName
+          ];
+        } else if (typeof dynamicComponentType === 'function') {
+          componentType = dynamicComponentType;
         } else {
-          if (typeof dynamicComponentType === 'function') {
-            componentType = dynamicComponentType;
-          } else {
+          if (componentInjector) {
             throw new Error(
-              `JssComponentFactoryService: Lazy load module for component "${lazyComponent.path}" missing DYNAMIC_COMPONENT provider. Missing JssModule.forChild()?`
+              `JssComponentFactoryService: DYNAMIC_COMPONENT component map does not contain "${component.componentName}" for lazy component "${lazyComponent.path}".`
             );
           }
+          throw new Error(
+            `JssComponentFactoryService: Lazy load module for component "${lazyComponent.path}" missing DYNAMIC_COMPONENT provider. Missing JssModule.forChild()?`
+          );
+        }
+
+        if (componentInjector && typeof componentType !== 'function') {
+          throw new Error(
+            `JssComponentFactoryService: DYNAMIC_COMPONENT component map entry for "${component.componentName}" is not a component type.`
+          );
         }
 
         return {
           componentDefinition: this.applySXAParams(component),
           componentImplementation: componentType,
           componentModuleRef: moduleRef,
+          componentInjector,
           canActivate: lazyComponent.canActivate,
           resolve: lazyComponent.resolve,
         };

@@ -8,7 +8,6 @@ import { JssStateService } from '../services/jss-state.service';
 import { cleanHtml } from '../test-utils';
 
 describe('FormComponent', () => {
-  let component: FormComponent;
   let fixture: ComponentFixture<FormComponent>;
   let mockElementRef: ElementRef<HTMLElement>;
 
@@ -41,7 +40,8 @@ describe('FormComponent', () => {
     };
 
     TestBed.configureTestingModule({
-      declarations: [FormComponent],
+      declarations: [],
+      imports: [FormComponent],
       providers: [
         JssStateService,
         { provide: EDGE_CONFIG, useValue: edgeConfig },
@@ -50,8 +50,8 @@ describe('FormComponent', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(FormComponent);
-    component = fixture.componentInstance;
-    component.rendering = rendering;
+
+    fixture.componentRef.setInput('rendering', rendering);
     elementRef = fixture.debugElement.injector.get(ElementRef);
   };
 

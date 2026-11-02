@@ -1,15 +1,18 @@
 import {
   Component,
   ComponentRef,
-  Inject,
   Input,
   KeyValueDiffer,
   KeyValueDiffers,
   OnChanges,
+  OnDestroy,
+  OutputRef,
   SimpleChanges,
   Type,
-  ViewChild,
   ViewContainerRef,
+  inject,
+  input,
+  viewChild,
 } from '@angular/core';
 import { ComponentRendering, HtmlElementRendering } from '@sitecore-jss/sitecore-jss/layout';
 import { Observable } from 'rxjs';
@@ -32,21 +35,24 @@ import { isRawRendering } from './rendering';
     <ng-template #view></ng-template>
   `,
 })
-export class RenderComponentComponent implements OnChanges {
-  @Input() rendering: ComponentRendering | HtmlElementRendering;
-  @Input() outputs: { [k: string]: (eventType: unknown) => void };
-  @ViewChild('view', { read: ViewContainerRef, static: true }) private view: ViewContainerRef;
+export class RenderComponentComponent implements OnChanges, OnDestroy {
+  readonly rendering = input<ComponentRendering | HtmlElementRendering>();
+  readonly outputs = input<{
+    [k: string]: (eventType: unknown) => void;
+  }>();
+  private readonly view = viewChild.required('view', { read: ViewContainerRef });
 
-  private _inputs: { [key: string]: unknown };
-  private _differ: KeyValueDiffer<string, unknown>;
+  private readonly differs = inject(KeyValueDiffers);
+  private readonly componentFactory = inject(JssComponentFactoryService);
+  private readonly missingComponentComponent = inject<
+    Type<{
+      [key: string]: unknown;
+    }>
+  >(PLACEHOLDER_MISSING_COMPONENT_COMPONENT);
+
+  private _inputs?: { [key: string]: unknown };
+  private _differ?: KeyValueDiffer<string, unknown>;
   private destroyed = false;
-
-  constructor(
-    private differs: KeyValueDiffers,
-    private componentFactory: JssComponentFactoryService,
-    @Inject(PLACEHOLDER_MISSING_COMPONENT_COMPONENT)
-    private missingComponentComponent: Type<{ [key: string]: unknown }>
-  ) {}
 
   @Input()
   set inputs(value: { [key: string]: unknown }) {
@@ -62,6 +68,10 @@ export class RenderComponentComponent implements OnChanges {
     }
   }
 
+  ngOnDestroy() {
+    this.destroyed = true;
+  }
+
   private _setComponentInputs(
     componentRef: ComponentRef<unknown>,
     inputs: { [key: string]: unknown }
@@ -75,32 +85,46 @@ export class RenderComponentComponent implements OnChanges {
     componentInstance: { [key: string]: unknown },
     outputs: { [k: string]: (eventType: unknown) => void }
   ) {
-    Object.keys(outputs)
-      .filter(
-        (output) => componentInstance[output] && componentInstance[output] instanceof Observable
-      )
-      .forEach((output) =>
-        (componentInstance[output] as Observable<unknown>)
-          .pipe(takeWhile(() => !this.destroyed))
-          .subscribe(outputs[output])
-      );
+    Object.keys(outputs).forEach((output) => {
+      const outputSource = componentInstance[output];
+      if (outputSource instanceof Observable) {
+        outputSource.pipe(takeWhile(() => !this.destroyed)).subscribe(outputs[output]);
+      } else if (
+        outputSource &&
+        typeof outputSource === 'object' &&
+        'subscribe' in outputSource &&
+        typeof outputSource.subscribe === 'function'
+      ) {
+        (outputSource as OutputRef<unknown>).subscribe((value) => {
+          if (!this.destroyed) {
+            outputs[output](value);
+          }
+        });
+      }
+    });
   }
 
-  private _render() {
-    this.view.clear();
+  private _render(): Promise<void> {
+    const view = this.view();
+    view.clear();
 
-    if (!this.rendering) {
-      return;
+    const renderingValue = this.rendering();
+    if (!renderingValue) {
+      return Promise.resolve();
     }
 
-    const resolveComponent: Promise<ComponentFactoryResult> = isRawRendering(this.rendering)
+    const resolveComponent: Promise<ComponentFactoryResult> = isRawRendering(renderingValue)
       ? Promise.resolve({
           componentImplementation: RawComponent,
-          componentDefinition: this.rendering,
+          componentDefinition: renderingValue,
         })
-      : this.componentFactory.getComponent(this.rendering);
+      : this.componentFactory.getComponent(renderingValue);
 
-    resolveComponent.then((rendering) => {
+    return resolveComponent.then((rendering) => {
+      if (this.destroyed) {
+        return;
+      }
+
       if (!rendering.componentImplementation) {
         const componentName = (rendering.componentDefinition as ComponentRendering).componentName;
         console.error(
@@ -114,13 +138,16 @@ export class RenderComponentComponent implements OnChanges {
         rendering.componentImplementation = this.missingComponentComponent;
       }
 
-      const componentRef = this.view.createComponent(rendering.componentImplementation);
+      const componentRef = view.createComponent(rendering.componentImplementation, {
+        environmentInjector: rendering.componentInjector,
+      });
       componentRef.setInput('rendering', rendering.componentDefinition);
       if (this._inputs) {
         this._setComponentInputs(componentRef, this._inputs);
       }
-      if (this.outputs) {
-        this._subscribeComponentOutputs(componentRef.instance, this.outputs);
+      const outputs = this.outputs();
+      if (outputs) {
+        this._subscribeComponentOutputs(componentRef.instance, outputs);
       }
     });
   }

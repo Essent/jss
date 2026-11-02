@@ -25,6 +25,7 @@ export { EDGE_CONFIG } from './services/shared.token';
 export { JssStateService, BaseJssState } from './services/jss-state.service';
 export { PlaceholderLoadingDirective } from './components/placeholder-loading.directive';
 export { isRawRendering } from './components/rendering';
+export { ComponentFactoryResult } from './services/jss-component-factory.service';
 export {
   FileField,
   ImageField,
@@ -38,7 +39,7 @@ export {
 export { SxaLinkListFields, SxaTitleFields } from './components/rendering-field-sxa';
 export { RichTextDirective } from './components/rich-text.directive';
 export { TextDirective } from './components/text.directive';
-export { JssModule } from './lib.module';
+export { JSS_DIRECTIVES, JssModule, provideJss, provideJssComponents } from './lib.module';
 export { mediaApi } from '@sitecore-jss/sitecore-jss/media';
 export {
   DictionaryService,

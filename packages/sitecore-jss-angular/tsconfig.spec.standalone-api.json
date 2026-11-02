@@ -1,0 +1,17 @@
+{
+  // CI runs only these specs. They compile non-strict, the same as the package build
+  // (tsconfig.lib.json).
+  "extends": "./tsconfig.spec.json",
+  "compilerOptions": {
+    "strict": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
+  },
+  "files": [
+    "./src/test.ts",
+    "./src/component-injector-lifecycle.spec.ts",
+    "./src/standalone-provider-api.spec.ts",
+    "./src/services/lazy-component-load-result.spec.ts"
+  ],
+  "include": ["./typings/**/*.d.ts"]
+}
