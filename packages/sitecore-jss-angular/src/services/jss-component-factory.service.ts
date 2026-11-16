@@ -28,6 +28,7 @@ export interface ComponentFactoryResult {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   componentImplementation?: Type<any>;
   componentDefinition: ComponentRendering | HtmlElementRendering;
+  /** @deprecated Set only for an NgModule lazy load result. Use componentInjector. */
   componentModuleRef?: NgModuleRef<unknown>;
   /**
    * Environment injector for a lazy component, component map or EnvironmentProviders result.
