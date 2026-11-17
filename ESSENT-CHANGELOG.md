@@ -18,6 +18,10 @@ Version numbers follow the upstream line (`22.10.0-canary.N`). Before `canary.9`
 
 ## Current line (`feat/angular-20`)
 
+### 22.10.0-canary.14 (2026-11-17)
+
+- The two NgModule lazy-load errors ("Missing JssModule.forChild()?") mark that API as deprecated and name the replacement: `EnvironmentProviders` that provide `DYNAMIC_COMPONENT` (ATL-4069, review nit on #14).
+
 ### 22.10.0-canary.13 (2026-11-17)
 
 - Deprecate the `JssModule` NgModule API: `JssModule`, `forRoot`, `forChild`, `withComponents`, the NgModule `loadChildren` result and `ComponentFactoryResult.componentModuleRef`. Kept for upstream alignment (ATL-4069, #14).
