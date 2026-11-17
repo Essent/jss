@@ -1,18 +1,21 @@
-import { Component, DebugElement, Input } from '@angular/core';
+import { Component, DebugElement, input } from '@angular/core';
 import { FieldMetadataMarkerComponent } from './field-metadata-marker.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { MetadataKind } from '@sitecore-jss/sitecore-jss/editing';
+import { JSS_DIRECTIVES } from '../lib.module';
 
 @Component({
+  imports: [FieldMetadataMarkerComponent, JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-marker',
   template: `
-    <code scFieldMetadataMarker [metadata]="metadata" [kind]="kind"></code>
+    <code scFieldMetadataMarker [metadata]="metadata()" [kind]="kind()"></code>
   `,
 })
 class TestComponent {
-  @Input() metadata: any;
-  @Input() kind: MetadataKind = MetadataKind.Open;
+  readonly metadata = input<any>(undefined);
+  readonly kind = input<MetadataKind>(MetadataKind.Open);
 }
 
 describe('<code scFieldMetadataMarker />', () => {
@@ -22,7 +25,8 @@ describe('<code scFieldMetadataMarker />', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [FieldMetadataMarkerComponent, TestComponent],
+      declarations: [],
+      imports: [FieldMetadataMarkerComponent, TestComponent],
     });
 
     fixture = TestBed.createComponent(TestComponent);
@@ -40,7 +44,7 @@ describe('<code scFieldMetadataMarker />', () => {
   });
 
   it('should render a kind attribute with "open" value', () => {
-    comp.kind = MetadataKind.Open;
+    fixture.componentRef.setInput('kind', MetadataKind.Open);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('code')).nativeElement;
@@ -48,7 +52,7 @@ describe('<code scFieldMetadataMarker />', () => {
   });
 
   it('should render a kind attribute with "close" value', () => {
-    comp.kind = MetadataKind.Close;
+    fixture.componentRef.setInput('kind', MetadataKind.Close);
     fixture.detectChanges();
 
     const rendered = de.query(By.css('code')).nativeElement;
@@ -56,10 +60,10 @@ describe('<code scFieldMetadataMarker />', () => {
   });
 
   it('should add metadata as content of code element', () => {
-    comp.metadata = { key: 'value' };
+    fixture.componentRef.setInput('metadata', { key: 'value' });
     fixture.detectChanges();
 
     const rendered = de.query(By.css('code')).nativeElement as HTMLElement;
-    expect(rendered.textContent).toBe(JSON.stringify(comp.metadata));
+    expect(rendered.textContent).toBe(JSON.stringify(comp.metadata()));
   });
 });

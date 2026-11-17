@@ -1,4 +1,4 @@
-import { EditMode, ComponentRendering, ComponentFields } from '@sitecore-jss/sitecore-jss/layout';
+import { ComponentFields, ComponentRendering, EditMode } from '@sitecore-jss/sitecore-jss/layout';
 
 export const layoutData = {
   serverRoute: '/',
@@ -20,6 +20,7 @@ export const layoutData = {
             fieldType: 'text',
             rawValue: 'textField',
           },
+          value: 'test',
         },
       },
       placeholders: {

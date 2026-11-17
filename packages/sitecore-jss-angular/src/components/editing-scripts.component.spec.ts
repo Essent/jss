@@ -7,8 +7,11 @@ import { inject } from '@angular/core/testing';
 import { JssStateService } from '../services/jss-state.service';
 import { EditingScriptsComponent } from './editing-scripts.component';
 import * as utils from '@sitecore-jss/sitecore-jss/utils';
+import { JSS_DIRECTIVES } from '../lib.module';
 
 @Component({
+  imports: [JSS_DIRECTIVES],
+  standalone: true,
   selector: 'test-component',
   template: `
     <sc-editing-scripts></sc-editing-scripts>
@@ -46,7 +49,8 @@ describe('<EditingScripts />', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [TestComponent, EditingScriptsComponent],
+      declarations: [],
+      imports: [EditingScriptsComponent, TestComponent],
       providers: [
         Renderer2,
         JssStateService,

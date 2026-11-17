@@ -1,9 +1,9 @@
-import { Component, OnInit, Renderer2, Inject } from '@angular/core';
-import { getJssPagesClientData } from '@sitecore-jss/sitecore-jss/editing';
-import { JssStateService } from '../services/jss-state.service';
 import { DOCUMENT } from '@angular/common';
+import { Component, inject, OnInit, Renderer2 } from '@angular/core';
+import { getJssPagesClientData } from '@sitecore-jss/sitecore-jss/editing';
 import { EditMode, LayoutServicePageState } from '@sitecore-jss/sitecore-jss/layout';
 import { isServer } from '@sitecore-jss/sitecore-jss/utils';
+import { JssStateService } from '../services/jss-state.service';
 
 /**
  * Component that renders editing scripts and client data for the current page in Sitecore Editor.
@@ -14,11 +14,9 @@ import { isServer } from '@sitecore-jss/sitecore-jss/utils';
   template: '',
 })
 export class EditingScriptsComponent implements OnInit {
-  constructor(
-    private renderer: Renderer2,
-    private stateService: JssStateService,
-    @Inject(DOCUMENT) private document: Document
-  ) {}
+  private readonly renderer: Renderer2 = inject(Renderer2);
+  private readonly stateService: JssStateService = inject(JssStateService);
+  private readonly document: Document = inject(DOCUMENT);
 
   ngOnInit(): void {
     const state = this.stateService.stateValue;

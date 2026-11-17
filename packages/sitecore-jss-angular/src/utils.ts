@@ -1,3 +1,4 @@
+// Private Angular API. Verify this export for each supported Angular major.
 import { ɵisPromise as isPromise } from '@angular/core';
 import { from, Observable, isObservable, of } from 'rxjs';
 

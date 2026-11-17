@@ -1,11 +1,13 @@
 import {
   Directive,
   EmbeddedViewRef,
-  Input,
+  inject,
   OnChanges,
   SimpleChanges,
   TemplateRef,
   ViewContainerRef,
+  input,
+  InputSignal,
 } from '@angular/core';
 import { FileField } from './rendering-field';
 
@@ -14,11 +16,14 @@ import { FileField } from './rendering-field';
  */
 @Directive({ selector: '[scFile]' })
 export class FileDirective implements OnChanges {
-  @Input('scFile') field: FileField;
+  readonly field: InputSignal<FileField | undefined> = input<FileField | undefined>(undefined, {
+    alias: 'scFile',
+  });
 
-  private viewRef: EmbeddedViewRef<unknown>;
+  private viewRef?: EmbeddedViewRef<unknown>;
 
-  constructor(private viewContainer: ViewContainerRef, private templateRef: TemplateRef<unknown>) {}
+  private readonly templateRef: TemplateRef<unknown> = inject(TemplateRef);
+  private readonly viewContainer: ViewContainerRef = inject(ViewContainerRef);
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.field) {
@@ -32,14 +37,14 @@ export class FileDirective implements OnChanges {
   }
 
   private updateView() {
-    const field = this.field;
+    const field = this.field();
 
     if (!field || (!field.value && !field.src)) {
       return;
     }
 
     const file = field.src ? field : field.value;
-    this.viewRef.rootNodes.forEach((node) => {
+    this.viewRef?.rootNodes.forEach((node) => {
       if (!file) return;
 
       node.href = file.src;
