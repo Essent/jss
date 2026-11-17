@@ -1,7 +1,7 @@
 <!--- Provide a general summary of your changes in the Title above -->
 
 - [ ] This PR follows the [Contribution Guide](https://github.com/Sitecore/jss/blob/dev/CONTRIBUTING.md)
-- [ ] Changelog updated
+- [ ] ESSENT-CHANGELOG.md updated (Essent changes; CHANGELOG.md is upstream's)
 - [ ] Upgrade guide entry added
 
 ## Description / Motivation
