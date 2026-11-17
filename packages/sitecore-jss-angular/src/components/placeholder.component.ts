@@ -441,7 +441,7 @@ export class PlaceholderComponent implements OnInit, OnChanges, DoCheck, OnDestr
       console.error(
         `Placeholder ${this.name()} contains unknown component ${componentName}.`,
         `Ensure component is mapped, like:
-        JssModule.withComponents([
+        provideJssComponents([
           { name: '${componentName}', type: ${componentName}Component }
         ])`
       );

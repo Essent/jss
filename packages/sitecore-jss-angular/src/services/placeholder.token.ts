@@ -29,7 +29,8 @@ export interface ComponentNameAndModule {
   /** Name of the component */
   path: string;
   /**
-   * Dynamic import resolving to an NgModule, standalone component, component map, or EnvironmentProviders.
+   * Dynamic import resolving to a standalone component, component map, or EnvironmentProviders.
+   * An NgModule result still works but is deprecated: return EnvironmentProviders instead.
    */
   loadChildren: () => Promise<LazyComponentLoadResult>;
   canActivate?:

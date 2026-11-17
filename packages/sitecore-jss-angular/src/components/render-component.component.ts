@@ -130,7 +130,7 @@ export class RenderComponentComponent implements OnChanges, OnDestroy {
         console.error(
           `Attempted to render unknown component ${componentName}.`,
           `Ensure component is mapped, like:
-          JssModule.withComponents([
+          provideJssComponents([
             { name: '${componentName}', type: ${componentName}Component }
           ])`
         );

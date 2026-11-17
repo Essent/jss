@@ -137,6 +137,10 @@ export function provideJssComponents(
   return makeEnvironmentProviders(getJssComponentProviders(components, lazyComponents));
 }
 
+/**
+ * @deprecated Import the standalone components and directives directly, and register JSS with
+ * provideJss() or provideJssComponents(). Kept for upstream JSS alignment; it will not get new features.
+ */
 @NgModule({
   imports: [
     CommonModule,
@@ -168,6 +172,7 @@ export class JssModule {
    * Instantiates the JSS module with no component factory.
    * Useful for using it from libraries. Most of the time you'd want withComponents()
    * @returns {ModuleWithProviders<JssModule>} module
+   * @deprecated Use provideJss().
    */
   static forRoot(): ModuleWithProviders<JssModule> {
     return {
@@ -180,6 +185,8 @@ export class JssModule {
    * Instantiates a module for a lazy-loaded JSS component(s)
    * @param {Type<unknown> | Record<string, Type<unknown>> } value - component or map of components
    * @returns {ModuleWithProviders<JssModule>} module
+   * @deprecated Return EnvironmentProviders with `{ provide: DYNAMIC_COMPONENT, useValue }`
+   * from loadChildren, or return the component or component map itself.
    */
   static forChild(
     value: Type<unknown> | { [key: string]: Type<unknown> }
@@ -199,6 +206,7 @@ export class JssModule {
    * @param {ComponentNameAndType[]} components
    * @param {ComponentNameAndModule[]} [lazyComponents]
    * @returns {ModuleWithProviders<JssModule>} module
+   * @deprecated Use provideJssComponents().
    */
   static withComponents(
     components: ComponentNameAndType[],
